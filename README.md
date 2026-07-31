@@ -24,3 +24,9 @@ Alle in diesem Repository genannten Produkt- und Firmennamen sind Marken oder ei
 - Weitere genannte Produkt- und Firmennamen können Marken der jeweiligen Inhaber sein.
 
 Die Verwendung dieser Marken dient ausschließlich der Identifikation von Produkten und Technologien und impliziert keine Partnerschaft, Empfehlung oder Zugehörigkeit zu den jeweiligen Rechteinhabern.
+
+## Haftungsausschluss
+
+Die Projekte in diesem Repository sind Demos und Lernbeispiele zum Ausprobieren – sie zeigen Konzepte, sind aber nicht für den Produktiveinsatz gedacht (u. a. ohne Authentifizierung und mit vereinfachter Fehlerbehandlung). Der Code wird "as is", ohne jegliche Gewährleistung bereitgestellt.
+
+Wer den Code ausführt oder in eigenen Projekten verwendet, tut dies auf eigene Verantwortung. Für Schäden, die durch die Nutzung entstehen – etwa Kosten durch die Nutzung kostenpflichtiger externer Dienste (z. B. OpenAI-API-Aufrufe mit dem eigenen API-Key) – wird keine Haftung übernommen.
