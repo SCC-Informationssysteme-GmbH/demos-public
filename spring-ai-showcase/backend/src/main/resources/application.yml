@@ -1,0 +1,16 @@
+server:
+  port: 8100
+
+spring:
+  application:
+    name: ai-showcase-backend
+
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  base-url: https://api.openai.com/v1
+  model: gpt-4o-mini
+  embedding-model: text-embedding-3-small
+
+qdrant:
+  base-url: ${QDRANT_URL:http://localhost:6333}
+  collection: ai-showcase-docs

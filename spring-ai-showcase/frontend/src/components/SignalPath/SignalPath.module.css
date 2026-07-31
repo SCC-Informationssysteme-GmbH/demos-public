@@ -1,0 +1,35 @@
+.path {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.node {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--color-node-idle);
+  transition: background-color 0.2s ease;
+}
+
+.loading {
+  background: var(--color-accent);
+  animation: pulse 0.8s ease-in-out infinite;
+}
+
+.success {
+  background: var(--color-accent);
+}
+
+.error {
+  background: var(--color-error);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}

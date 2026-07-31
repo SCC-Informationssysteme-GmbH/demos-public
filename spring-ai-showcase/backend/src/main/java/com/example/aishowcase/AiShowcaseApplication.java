@@ -1,0 +1,14 @@
+package com.example.aishowcase;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+
+@SpringBootApplication
+@ConfigurationPropertiesScan
+public class AiShowcaseApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(AiShowcaseApplication.class, args);
+    }
+}

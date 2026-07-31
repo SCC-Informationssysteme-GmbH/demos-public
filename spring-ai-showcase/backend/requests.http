@@ -1,0 +1,89 @@
+### Ch.01 - LLM REST Chat
+POST http://localhost:8100/api/ch01/chat
+Content-Type: application/json
+
+{
+  "prompt": "Sag Hallo in einem Satz"
+}
+
+### Ch.02 - Prompt-Templates auflisten
+GET http://localhost:8100/api/ch02/templates
+
+### Ch.02 - Prompt-Template anwenden
+POST http://localhost:8100/api/ch02/chat
+Content-Type: application/json
+
+{
+  "templateKey": "summary",
+  "input": "Das Produkt kam pünktlich an, aber die Verpackung war beschädigt."
+}
+
+### Ch.03 - Wissensbasis auflisten
+GET http://localhost:8100/api/ch03/documents
+
+### Ch.03 - RAG-Frage stellen
+POST http://localhost:8100/api/ch03/ask
+Content-Type: application/json
+
+{
+  "question": "Wie viele Urlaubstage stehen mir zu?"
+}
+
+### Ch.04 - Wissensbasis in Qdrant indexieren
+POST http://localhost:8100/api/ch04/index
+
+### Ch.04 - Vektorsuche
+POST http://localhost:8100/api/ch04/search
+Content-Type: application/json
+
+{
+  "query": "Kann ich von zuhause arbeiten?"
+}
+
+### Ch.04 - Einzelnes Dokument hochladen
+POST http://localhost:8100/api/ch04/documents
+Content-Type: application/json
+
+{
+  "id": "gleitzeit",
+  "title": "Gleitzeit-Regelung",
+  "content": "Kernarbeitszeit ist von 9 bis 15 Uhr, ausserhalb davon kann die Arbeitszeit frei gewaehlt werden."
+}
+
+### Ch.05 - LangChain4J-Chat (Session-Memory)
+POST http://localhost:8100/api/ch05/chat
+Content-Type: application/json
+
+{
+  "sessionId": "demo-session",
+  "message": "Hallo, mein Name ist Max Mustermann. Ich habe ein Problem mit dem Login."
+}
+
+### Ch.05 - Gespraechsverlauf zuruecksetzen
+DELETE http://localhost:8100/api/ch05/chat/demo-session
+
+### Ch.06 - Ticket klassifizieren
+POST http://localhost:8100/api/ch06/classify
+Content-Type: application/json
+
+{
+  "ticketText": "Seit dem Update kann ich mich ueberhaupt nicht mehr einloggen, die App stuerzt sofort ab."
+}
+
+### Status-Checks (alle Kanaele)
+GET http://localhost:8100/api/ch01/status
+
+###
+GET http://localhost:8100/api/ch02/status
+
+###
+GET http://localhost:8100/api/ch03/status
+
+###
+GET http://localhost:8100/api/ch04/status
+
+###
+GET http://localhost:8100/api/ch05/status
+
+###
+GET http://localhost:8100/api/ch06/status

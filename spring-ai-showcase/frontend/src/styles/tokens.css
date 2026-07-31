@@ -1,0 +1,14 @@
+:root {
+  --color-bg: #0b0d10;
+  --color-panel: #14171b;
+  --color-border: #2a2f36;
+  --color-text: #e6e6e6;
+  --color-text-muted: #9aa1a9;
+  --color-accent: #ffb454;
+  --color-error: #e5484d;
+  --color-node-idle: #3a3f47;
+
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-body: 'Inter', sans-serif;
+}

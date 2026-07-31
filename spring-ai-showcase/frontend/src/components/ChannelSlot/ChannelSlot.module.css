@@ -1,0 +1,31 @@
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  padding: 1rem;
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.slot:hover {
+  border-color: var(--color-accent);
+}
+
+.code {
+  font-family: var(--font-mono);
+  color: var(--color-accent);
+  font-size: 0.8rem;
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+}
+
+.module {
+  font-family: var(--font-mono);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
