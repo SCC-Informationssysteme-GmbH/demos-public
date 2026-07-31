@@ -1,0 +1,18 @@
+server:
+  port: 8080
+
+openai:
+  tts:
+    api-key: ${OPENAI_API_KEY}
+    base-url: https://api.openai.com
+    model: tts-1
+    default-voice: alloy
+    instructions-model: gpt-4o-mini-tts
+
+app:
+  cors:
+    allowed-origins: http://localhost:5173
+
+logging:
+  level:
+    de.scc.demo.tts: INFO
