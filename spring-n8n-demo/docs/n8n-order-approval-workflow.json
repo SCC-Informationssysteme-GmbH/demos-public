@@ -1,0 +1,187 @@
+{
+  "id": "orderApproval1",
+  "name": "Order Approval",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "order-created",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Webhook: order-created",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-200, 0],
+      "webhookId": "order-created"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-amount",
+              "leftValue": "={{$json.body.amount}}",
+              "rightValue": 500,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-node",
+      "name": "Betrag >= 500?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [40, 0]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "genehmigungen",
+          "mode": "name"
+        },
+        "messageType": "block",
+        "text": "=Neue Bestellung erfordert Freigabe: {{$json.body.article}} ({{$json.body.amount}} EUR)",
+        "blocksUi": "={{ JSON.stringify({ blocks: [ { type: 'section', text: { type: 'mrkdwn', text: '*Neue Bestellung erfordert Freigabe*\\n*Bestell-ID:* ' + $json.body.orderId + '\\n*Artikel:* ' + $json.body.article + '\\n*Menge:* ' + $json.body.quantity + '\\n*Betrag:* ' + $json.body.amount + ' EUR\\n*Kunde:* ' + $json.body.customer } }, { type: 'actions', elements: [ { type: 'button', text: { type: 'plain_text', text: 'Genehmigen' }, style: 'primary', action_id: 'approve_order', value: String($json.body.orderId) }, { type: 'button', text: { type: 'plain_text', text: 'Ablehnen' }, style: 'danger', action_id: 'reject_order', value: String($json.body.orderId) } ] } ] }) }}",
+        "otherOptions": {}
+      },
+      "id": "slack-node",
+      "name": "Slack: Freigabe anfragen",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [280, -100],
+      "credentials": {
+        "slackApi": {
+          "id": "fXv3GRcupZsTIofX",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://host.docker.internal:8081/api/orders/{{$json.body.orderId}}/callback",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"decision\":\"APPROVED\"}",
+        "options": {}
+      },
+      "id": "http-autoapprove-node",
+      "name": "Callback: Auto-Approve",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [280, 100]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-interaction",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-slack-interaction-node",
+      "name": "Webhook: slack-interaction",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-200, 300],
+      "webhookId": "slack-interaction"
+    },
+    {
+      "parameters": {
+        "jsCode": "const payload = JSON.parse($input.item.json.body.payload);\nconst action = payload.actions[0];\nreturn [{\n  json: {\n    orderId: action.value,\n    decision: action.action_id === 'approve_order' ? 'APPROVED' : 'REJECTED'\n  }\n}];"
+      },
+      "id": "code-parse-slack-payload-node",
+      "name": "Slack-Payload parsen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [40, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://host.docker.internal:8081/api/orders/{{$json.orderId}}/callback",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"decision\":\"{{$json.decision}}\"}",
+        "options": {}
+      },
+      "id": "http-slack-callback-node",
+      "name": "Callback: Freigabe/Ablehnung",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [280, 300]
+    }
+  ],
+  "connections": {
+    "Webhook: order-created": {
+      "main": [
+        [
+          {
+            "node": "Betrag >= 500?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Betrag >= 500?": {
+      "main": [
+        [
+          {
+            "node": "Slack: Freigabe anfragen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Callback: Auto-Approve",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: slack-interaction": {
+      "main": [
+        [
+          {
+            "node": "Slack-Payload parsen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack-Payload parsen": {
+      "main": [
+        [
+          {
+            "node": "Callback: Freigabe/Ablehnung",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

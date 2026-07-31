@@ -1,0 +1,22 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: spring-n8n-demo-backend
+  datasource:
+    url: jdbc:h2:mem:orders
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+n8n:
+  webhook:
+    order-created-url: http://127.0.0.1:5678/webhook/order-created
