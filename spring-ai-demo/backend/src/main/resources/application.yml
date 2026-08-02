@@ -1,0 +1,26 @@
+server:
+  port: 8100
+
+spring:
+  application:
+    name: ai-demo-backend
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        options:
+          model: gpt-4o-mini
+      embedding:
+        options:
+          model: text-embedding-3-small
+    vectorstore:
+      qdrant:
+        host: ${QDRANT_HOST:localhost}
+        port: ${QDRANT_GRPC_PORT:6334}
+        collection-name: ai-demo-docs
+        initialize-schema: true
+
+# Nur fuer CH.05 (LangChain4j) - eigenstaendige Config, unabhaengig von spring.ai.openai.*
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  model: gpt-4o-mini

@@ -1,0 +1,4 @@
+package com.example.aidemo.prompt;
+
+public record PromptChatResponse(String channel, String module, String templateKey, String renderedPrompt, String reply) {
+}
