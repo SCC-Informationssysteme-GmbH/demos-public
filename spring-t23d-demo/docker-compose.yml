@@ -1,0 +1,25 @@
+services:
+  freecad:
+    build:
+      context: ./freecad-docker
+    image: prompt-to-3d-freecad:latest
+    entrypoint: ["freecadcmd"]
+    command: ["--version"]
+
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      APP_FREECAD_DOCKERIMAGE: prompt-to-3d-freecad:latest
+      APP_FREECAD_SCRIPTSDIR: /app/data/scripts
+      APP_FREECAD_SCRIPTSDIRHOST: ${HOST_DATA_DIR}/scripts
+      APP_FREECAD_MODELSDIR: /app/data/models
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOST_DATA_DIR}/scripts:/app/data/scripts
+      - ${HOST_DATA_DIR}/models:/app/data/models
+    depends_on:
+      - freecad
