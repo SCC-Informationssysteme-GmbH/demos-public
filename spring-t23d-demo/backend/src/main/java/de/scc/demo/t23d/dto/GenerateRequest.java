@@ -1,4 +1,4 @@
-package de.scc.demo.freecad.dto;
+package de.scc.demo.t23d.dto;
 
 import jakarta.validation.constraints.NotBlank;
 

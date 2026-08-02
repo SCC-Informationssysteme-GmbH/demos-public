@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>de.scc.demo</groupId>
-	<artifactId>prompt-to-3d-backend</artifactId>
+	<artifactId>text-to-3d-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>prompt-to-3d-backend</name>
-	<description>Spring Boot Backend fuer Prompt-to-3D (FreeCAD)</description>
+	<name>text-to-3d-backend</name>
+	<description>Spring Boot Backend fuer Text-to-3D (FreeCAD)</description>
 
 	<properties>
 		<java.version>21</java.version>

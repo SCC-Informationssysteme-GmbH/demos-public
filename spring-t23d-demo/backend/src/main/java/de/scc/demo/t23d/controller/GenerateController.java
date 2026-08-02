@@ -1,10 +1,10 @@
-package de.scc.demo.freecad.controller;
+package de.scc.demo.t23d.controller;
 
-import de.scc.demo.freecad.dto.GenerateRequest;
-import de.scc.demo.freecad.dto.GenerateResponse;
-import de.scc.demo.freecad.service.CodeValidationService;
-import de.scc.demo.freecad.service.FreecadExecutionService;
-import de.scc.demo.freecad.service.LlmCodeGenerator;
+import de.scc.demo.t23d.dto.GenerateRequest;
+import de.scc.demo.t23d.dto.GenerateResponse;
+import de.scc.demo.t23d.service.CodeValidationService;
+import de.scc.demo.t23d.service.FreecadExecutionService;
+import de.scc.demo.t23d.service.LlmCodeGenerator;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

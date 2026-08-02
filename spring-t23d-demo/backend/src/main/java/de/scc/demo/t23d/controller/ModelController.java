@@ -1,6 +1,6 @@
-package de.scc.demo.freecad.controller;
+package de.scc.demo.t23d.controller;
 
-import de.scc.demo.freecad.config.AppProperties;
+import de.scc.demo.t23d.config.AppProperties;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;

@@ -1,4 +1,4 @@
-package de.scc.demo.freecad.exception;
+package de.scc.demo.t23d.exception;
 
 public class GenerationException extends RuntimeException {
 

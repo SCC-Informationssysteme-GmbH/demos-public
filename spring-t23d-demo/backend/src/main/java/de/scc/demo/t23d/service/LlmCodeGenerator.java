@@ -1,4 +1,4 @@
-package de.scc.demo.freecad.service;
+package de.scc.demo.t23d.service;
 
 public interface LlmCodeGenerator {
 

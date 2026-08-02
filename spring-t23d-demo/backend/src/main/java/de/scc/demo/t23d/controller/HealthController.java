@@ -1,4 +1,4 @@
-package de.scc.demo.freecad.controller;
+package de.scc.demo.t23d.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

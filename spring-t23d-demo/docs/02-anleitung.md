@@ -1,9 +1,9 @@
-# Anleitung: Prompt-to-3D (T23D)
+# Anleitung: Text-to-3D (T23D)
 
 Links wird ein Bauteil per Text beschrieben, rechts erscheint das daraus
 generierte 3D-Modell in einem interaktiven Viewer.
 
-![Übersicht der Anwendung](images/p23d_uebersicht.png)
+![Übersicht der Anwendung](images/t23d_uebersicht.png)
 
 ## Prompt-Bereich (links)
 

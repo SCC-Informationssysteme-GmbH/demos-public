@@ -1,7 +1,7 @@
-package de.scc.demo.freecad.config;
+package de.scc.demo.t23d.config;
 
-import de.scc.demo.freecad.service.LlmCodeGenerator;
-import de.scc.demo.freecad.service.OpenAiCodeGenerator;
+import de.scc.demo.t23d.service.LlmCodeGenerator;
+import de.scc.demo.t23d.service.OpenAiCodeGenerator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

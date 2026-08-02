@@ -9,11 +9,11 @@ app:
       model: gpt-4o
       base-url: https://api.openai.com/v1
   freecad:
-    docker-image: prompt-to-3d-freecad:latest
+    docker-image: text-to-3d-freecad:latest
     timeout-seconds: 30
     memory-limit: 512m
     cpu-limit: "1"
-    scripts-dir: ${java.io.tmpdir}/prompt-to-3d/scripts
+    scripts-dir: ${java.io.tmpdir}/text-to-3d/scripts
     # Nur noetig, wenn das Backend selbst containerisiert laeuft (siehe docker-compose.yml):
     # Host-Pfad des gemounteten Skript-Ordners, den der Docker-Daemon fuer "docker run -v" braucht.
     # Wird dort per APP_FREECAD_SCRIPTSDIRHOST gesetzt; lokal/nativ bleibt dieser Wert leer.
@@ -22,4 +22,4 @@ app:
 
 logging:
   level:
-    de.scc.demo.freecad: DEBUG
+    de.scc.demo.t23d: DEBUG

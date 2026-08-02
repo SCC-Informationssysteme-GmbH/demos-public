@@ -1,4 +1,4 @@
-# Prompt-to-3D (T23D)
+# Text-to-3D (T23D)
 
 Web-Anwendung: Prompt links, interaktiver 3D-Viewer rechts. Der Prompt wird an OpenAI geschickt,
 das daraus FreeCAD-Python-Code generiert; dieser Code laeuft isoliert in einem FreeCAD-Docker-Container
@@ -38,7 +38,7 @@ spring-t23d-demo/
 FreeCAD-Image bauen:
 
 ```bash
-docker build -t prompt-to-3d-freecad:latest freecad-docker
+docker build -t text-to-3d-freecad:latest freecad-docker
 ```
 
 Backend starten (nativ, nicht containerisiert — `ProcessBuilder` ruft `docker run` direkt auf dem Host auf):

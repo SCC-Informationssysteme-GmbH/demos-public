@@ -1,4 +1,4 @@
-# Projekt: Prompt-to-3D mit Spring Boot, FreeCAD und React
+# Projekt: Text-to-3D mit Spring Boot, FreeCAD und React
 
 ## 1. Ziel
 
@@ -104,7 +104,7 @@ ENTRYPOINT ["freecadcmd"]
 ```bash
 docker run --rm --network none --memory=512m --cpus=1 \
   -v /tmp/scripts/<id>:/work \
-  prompt-to-3d-freecad:latest /work/model.py
+  text-to-3d-freecad:latest /work/model.py
 ```
 
 ## 5. Frontend-Anforderungen (React)
@@ -145,7 +145,7 @@ docker run --rm --network none --memory=512m --cpus=1 \
 ## 6. Projektstruktur (Vorschlag)
 
 ```
-prompt-to-3d/
+text-to-3d/
 ├── backend/                 # Spring Boot Projekt
 │   ├── src/main/java/...
 │   ├── src/main/resources/application.yml

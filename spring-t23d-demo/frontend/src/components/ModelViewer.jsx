@@ -80,7 +80,7 @@ function ScreenshotHandler({ triggerRef }) {
       gl.render(scene, camera)
       const link = document.createElement('a')
       link.href = gl.domElement.toDataURL('image/png')
-      link.download = `prompt-to-3d-${Date.now()}.png`
+      link.download = `text-to-3d-${Date.now()}.png`
       link.click()
     }
   }, [gl, scene, camera, triggerRef])

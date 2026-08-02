@@ -1,8 +1,8 @@
-package de.scc.demo.freecad.service;
+package de.scc.demo.t23d.service;
 
-import de.scc.demo.freecad.config.AppProperties;
-import de.scc.demo.freecad.exception.GenerationException;
-import de.scc.demo.freecad.exception.GenerationException.ErrorType;
+import de.scc.demo.t23d.config.AppProperties;
+import de.scc.demo.t23d.exception.GenerationException;
+import de.scc.demo.t23d.exception.GenerationException.ErrorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

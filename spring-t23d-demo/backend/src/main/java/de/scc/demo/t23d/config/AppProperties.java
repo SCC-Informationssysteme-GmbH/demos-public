@@ -1,4 +1,4 @@
-package de.scc.demo.freecad.config;
+package de.scc.demo.t23d.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

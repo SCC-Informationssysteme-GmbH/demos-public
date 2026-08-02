@@ -45,7 +45,7 @@ function PromptPanel({ onGenerate, loading, error }) {
       <div className="prompt-panel-header">
         <span className="brand-badge">3D</span>
         <div>
-          <h1>Prompt-to-3D (T23D)</h1>
+          <h1>Text-to-3D (T23D)</h1>
           <p className="subtitle">Beschreibe ein Bauteil, ein Modell wird generiert</p>
         </div>
       </div>
