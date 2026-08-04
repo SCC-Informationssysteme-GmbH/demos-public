@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Konkrete WSDL des SOAP-Partnerservices BestellungFreigabeWebService
+    (bestellung-ejb): automatische Freigabe (Betrag < 10000), Manager-Freigabe-
+    Anforderung/Eskalation (Betrag >= 10000), Kompensation und der zentrale
+    Status-Ruecksprung, den der BPEL-Prozess nach jedem Teilschritt aufruft.
+-->
+<definitions name="BestellungFreigabeService"
+             targetNamespace="http://jeebpeldemo.scc.de/bestellungFreigabe"
+             xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:tns="http://jeebpeldemo.scc.de/bestellungFreigabe"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:plnk="http://docs.oasis-open.org/wsbpel/2.0/plnktype">
+
+    <types>
+        <xsd:schema targetNamespace="http://jeebpeldemo.scc.de/bestellungFreigabe">
+            <xsd:element name="automatischFreigeben">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="bestellungId" type="xsd:long"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="automatischFreigebenResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="freigegeben" type="xsd:boolean"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="managerFreigabeAnfordern">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="bestellungId" type="xsd:long"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="managerFreigabeAnfordernResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="aufgabeId" type="xsd:long"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="managerFreigabeEskalieren">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="bestellungId" type="xsd:long"/>
+                        <xsd:element name="aufgabeId" type="xsd:long"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="kompensationFreigeben">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="bestellungId" type="xsd:long"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="statusAktualisieren">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="bestellungId" type="xsd:long"/>
+                        <xsd:element name="status" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+        </xsd:schema>
+    </types>
+
+    <message name="automatischFreigebenRequestMessage">
+        <part name="parameters" element="tns:automatischFreigeben"/>
+    </message>
+    <message name="automatischFreigebenResponseMessage">
+        <part name="parameters" element="tns:automatischFreigebenResponse"/>
+    </message>
+    <message name="managerFreigabeAnfordernRequestMessage">
+        <part name="parameters" element="tns:managerFreigabeAnfordern"/>
+    </message>
+    <message name="managerFreigabeAnfordernResponseMessage">
+        <part name="parameters" element="tns:managerFreigabeAnfordernResponse"/>
+    </message>
+    <message name="managerFreigabeEskalierenRequestMessage">
+        <part name="parameters" element="tns:managerFreigabeEskalieren"/>
+    </message>
+    <message name="kompensationFreigebenRequestMessage">
+        <part name="parameters" element="tns:kompensationFreigeben"/>
+    </message>
+    <message name="statusAktualisierenRequestMessage">
+        <part name="parameters" element="tns:statusAktualisieren"/>
+    </message>
+
+    <portType name="BestellungFreigabePartnerPortType">
+        <operation name="automatischFreigeben">
+            <input message="tns:automatischFreigebenRequestMessage"/>
+            <output message="tns:automatischFreigebenResponseMessage"/>
+        </operation>
+        <operation name="managerFreigabeAnfordern">
+            <input message="tns:managerFreigabeAnfordernRequestMessage"/>
+            <output message="tns:managerFreigabeAnfordernResponseMessage"/>
+        </operation>
+        <operation name="managerFreigabeEskalieren">
+            <input message="tns:managerFreigabeEskalierenRequestMessage"/>
+        </operation>
+        <operation name="kompensationFreigeben">
+            <input message="tns:kompensationFreigebenRequestMessage"/>
+        </operation>
+        <operation name="statusAktualisieren">
+            <input message="tns:statusAktualisierenRequestMessage"/>
+        </operation>
+    </portType>
+
+    <binding name="BestellungFreigabeBinding" type="tns:BestellungFreigabePartnerPortType">
+        <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+        <operation name="automatischFreigeben">
+            <soap:operation soapAction=""/>
+            <input><soap:body use="literal"/></input>
+            <output><soap:body use="literal"/></output>
+        </operation>
+        <operation name="managerFreigabeAnfordern">
+            <soap:operation soapAction=""/>
+            <input><soap:body use="literal"/></input>
+            <output><soap:body use="literal"/></output>
+        </operation>
+        <operation name="managerFreigabeEskalieren">
+            <soap:operation soapAction=""/>
+            <input><soap:body use="literal"/></input>
+        </operation>
+        <operation name="kompensationFreigeben">
+            <soap:operation soapAction=""/>
+            <input><soap:body use="literal"/></input>
+        </operation>
+        <operation name="statusAktualisieren">
+            <soap:operation soapAction=""/>
+            <input><soap:body use="literal"/></input>
+        </operation>
+    </binding>
+
+    <service name="BestellungFreigabeService">
+        <port name="BestellungFreigabeWebServicePort" binding="tns:BestellungFreigabeBinding">
+            <soap:address location="http://wildfly:8080/bestellung-ejb/BestellungFreigabeService/BestellungFreigabeWebService"/>
+        </port>
+    </service>
+
+    <plnk:partnerLinkType name="BestellungFreigabePartnerLT">
+        <plnk:role name="BestellungFreigabeProvider" portType="tns:BestellungFreigabePartnerPortType"/>
+    </plnk:partnerLinkType>
+</definitions>

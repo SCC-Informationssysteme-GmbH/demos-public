@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Konkrete WSDL des SOAP-Partnerservices GelbfallWebService (bestellung-ejb).
+    gelbfallEroeffnen wird sowohl im Gelbfall-Pfad (Pruefung fehlgeschlagen) als
+    auch in der Eskalations-Scope (Manager-Freigabe-Timeout) aufgerufen.
+-->
+<definitions name="GelbfallService"
+             targetNamespace="http://jeebpeldemo.scc.de/gelbfall"
+             xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:tns="http://jeebpeldemo.scc.de/gelbfall"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:plnk="http://docs.oasis-open.org/wsbpel/2.0/plnktype">
+
+    <types>
+        <xsd:schema targetNamespace="http://jeebpeldemo.scc.de/gelbfall">
+            <xsd:element name="gelbfallEroeffnen">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="bestellungId" type="xsd:long"/>
+                        <xsd:element name="grund" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="gelbfallEroeffnenResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="gelbfallId" type="xsd:long"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="gelbfallSchliessen">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="bestellungId" type="xsd:long"/>
+                        <xsd:element name="gelbfallId" type="xsd:long"/>
+                        <xsd:element name="grund" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+        </xsd:schema>
+    </types>
+
+    <message name="gelbfallEroeffnenRequestMessage">
+        <part name="parameters" element="tns:gelbfallEroeffnen"/>
+    </message>
+    <message name="gelbfallEroeffnenResponseMessage">
+        <part name="parameters" element="tns:gelbfallEroeffnenResponse"/>
+    </message>
+    <message name="gelbfallSchliessenRequestMessage">
+        <part name="parameters" element="tns:gelbfallSchliessen"/>
+    </message>
+
+    <portType name="GelbfallPortType">
+        <operation name="gelbfallEroeffnen">
+            <input message="tns:gelbfallEroeffnenRequestMessage"/>
+            <output message="tns:gelbfallEroeffnenResponseMessage"/>
+        </operation>
+        <operation name="gelbfallSchliessen">
+            <input message="tns:gelbfallSchliessenRequestMessage"/>
+        </operation>
+    </portType>
+
+    <binding name="GelbfallBinding" type="tns:GelbfallPortType">
+        <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+        <operation name="gelbfallEroeffnen">
+            <soap:operation soapAction=""/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+        <operation name="gelbfallSchliessen">
+            <soap:operation soapAction=""/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+        </operation>
+    </binding>
+
+    <service name="GelbfallService">
+        <port name="GelbfallWebServicePort" binding="tns:GelbfallBinding">
+            <soap:address location="http://wildfly:8080/bestellung-ejb/GelbfallService/GelbfallWebService"/>
+        </port>
+    </service>
+
+    <plnk:partnerLinkType name="GelbfallPartnerLT">
+        <plnk:role name="GelbfallProvider" portType="tns:GelbfallPortType"/>
+    </plnk:partnerLinkType>
+</definitions>

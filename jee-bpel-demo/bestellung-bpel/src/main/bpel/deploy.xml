@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<deploy xmlns="http://www.apache.org/ode/schemas/dd/2007/03"
+        xmlns:pns="http://jeebpeldemo.scc.de/bpel/bestellungFreigabe"
+        xmlns:pwns="http://jeebpeldemo.scc.de/bpel/bestellungFreigabe.wsdl"
+        xmlns:prns="http://jeebpeldemo.scc.de/bestellungPruefung"
+        xmlns:gns="http://jeebpeldemo.scc.de/gelbfall"
+        xmlns:fns="http://jeebpeldemo.scc.de/bestellungFreigabe">
+
+    <process name="pns:BestellungFreigabeProcess">
+        <active>true</active>
+
+        <!-- eingehend: wie externe Clients (REST-Fassade, GUI, direkte SOAP-Aufrufe) den Prozess ueber ODE ansprechen -->
+        <provide partnerLink="client">
+            <service name="pwns:BestellungFreigabeProcessService" port="BestellungFreigabePort"/>
+        </provide>
+
+        <!-- ausgehend: konkrete Endpunkte der drei SOAP-Partnerservices auf WildFly -->
+        <invoke partnerLink="pruefungPartner">
+            <service name="prns:BestellungPruefungService" port="BestellungPruefungWebServicePort"/>
+        </invoke>
+        <invoke partnerLink="gelbfallPartner">
+            <service name="gns:GelbfallService" port="GelbfallWebServicePort"/>
+        </invoke>
+        <invoke partnerLink="freigabePartner">
+            <service name="fns:BestellungFreigabeService" port="BestellungFreigabeWebServicePort"/>
+        </invoke>
+    </process>
+</deploy>

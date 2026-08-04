@@ -1,0 +1,48 @@
+# Expliziter Projektname + eigenstaendiger Volume-Name: das Schwesterprojekt
+# jee-ejb-demo hat sein docker-compose.yml ebenfalls in einem Ordner "docker" -
+# ohne "name:" wuerde Compose denselben Default-Projektnamen ("docker") verwenden
+# und Container/Volumes (insbesondere die Oracle-Datenablage) mit dem anderen
+# Projekt teilen bzw. gegenseitig ueberschreiben.
+name: jee-bpel-demo
+
+services:
+
+  oracle-db:
+    image: gvenzl/oracle-free:23-slim-faststart
+    environment:
+      ORACLE_PASSWORD: system_password
+      APP_USER: bestellung
+      APP_USER_PASSWORD: bestellung
+    ports:
+      - "1522:1521"
+    volumes:
+      - oracle-data-bpel-demo:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  wildfly:
+    build:
+      context: ..
+      dockerfile: docker/wildfly/Dockerfile
+    depends_on:
+      oracle-db:
+        condition: service_healthy
+    ports:
+      - "9081:8080"
+      - "9991:9990"
+
+  ode:
+    build:
+      context: ..
+      dockerfile: docker/ode/Dockerfile
+    depends_on:
+      - wildfly
+    ports:
+      - "8181:8080"
+
+volumes:
+  oracle-data-bpel-demo:

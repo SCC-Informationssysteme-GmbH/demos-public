@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Abstrakte WSDL des BPEL-Prozesses selbst: das Interface, unter dem Apache ODE
+    den Prozess als SOAP-Service anbietet, plus die Korrelationsset-Property/
+    PropertyAlias-Definitionen (WS-BPEL 2.0 "varprop"-Erweiterung), damit
+    eingehende Nachrichten (Stornierung, Gelbfall-/Manager-Entscheidung) der
+    richtigen laufenden Prozessinstanz zugeordnet werden koennen.
+-->
+<definitions name="BestellungFreigabeProcess"
+             targetNamespace="http://jeebpeldemo.scc.de/bpel/bestellungFreigabe.wsdl"
+             xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:tns="http://jeebpeldemo.scc.de/bpel/bestellungFreigabe.wsdl"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:plnk="http://docs.oasis-open.org/wsbpel/2.0/plnktype"
+             xmlns:vprop="http://docs.oasis-open.org/wsbpel/2.0/varprop">
+
+    <types>
+        <xsd:schema targetNamespace="http://jeebpeldemo.scc.de/bpel/bestellungFreigabe.wsdl">
+            <xsd:element name="bestellungAnlegen">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="bestellungId" type="xsd:long"/>
+                        <!-- Betrag wird direkt mitgegeben (Bestellung existiert schon in
+                             Oracle, bevor der Prozess startet) - erspart einen Zusatz-
+                             Aufruf nur zum Nachladen des Betrags fuer die 10000er-Weiche -->
+                        <xsd:element name="betrag" type="xsd:decimal"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="bestellungAnlegenResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="angenommen" type="xsd:boolean"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="bestellungStornieren">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="bestellungId" type="xsd:long"/>
+                        <xsd:element name="grund" type="xsd:string" minOccurs="0"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="bestellungStornierenResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="angenommen" type="xsd:boolean"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="gelbfallEntscheidung">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="bestellungId" type="xsd:long"/>
+                        <xsd:element name="aufgabeId" type="xsd:long"/>
+                        <xsd:element name="freigegeben" type="xsd:boolean"/>
+                        <xsd:element name="kommentar" type="xsd:string" minOccurs="0"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="gelbfallEntscheidungResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="angenommen" type="xsd:boolean"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+
+            <xsd:element name="managerEntscheidung">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="bestellungId" type="xsd:long"/>
+                        <xsd:element name="aufgabeId" type="xsd:long"/>
+                        <xsd:element name="freigegeben" type="xsd:boolean"/>
+                        <xsd:element name="kommentar" type="xsd:string" minOccurs="0"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="managerEntscheidungResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="angenommen" type="xsd:boolean"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+        </xsd:schema>
+    </types>
+
+    <message name="bestellungAnlegenRequestMessage">
+        <part name="parameters" element="tns:bestellungAnlegen"/>
+    </message>
+    <message name="bestellungAnlegenResponseMessage">
+        <part name="parameters" element="tns:bestellungAnlegenResponse"/>
+    </message>
+    <message name="bestellungStornierenRequestMessage">
+        <part name="parameters" element="tns:bestellungStornieren"/>
+    </message>
+    <message name="bestellungStornierenResponseMessage">
+        <part name="parameters" element="tns:bestellungStornierenResponse"/>
+    </message>
+    <message name="gelbfallEntscheidungRequestMessage">
+        <part name="parameters" element="tns:gelbfallEntscheidung"/>
+    </message>
+    <message name="gelbfallEntscheidungResponseMessage">
+        <part name="parameters" element="tns:gelbfallEntscheidungResponse"/>
+    </message>
+    <message name="managerEntscheidungRequestMessage">
+        <part name="parameters" element="tns:managerEntscheidung"/>
+    </message>
+    <message name="managerEntscheidungResponseMessage">
+        <part name="parameters" element="tns:managerEntscheidungResponse"/>
+    </message>
+
+    <portType name="BestellungFreigabePortType">
+        <operation name="bestellungAnlegen">
+            <input message="tns:bestellungAnlegenRequestMessage"/>
+            <output message="tns:bestellungAnlegenResponseMessage"/>
+        </operation>
+        <operation name="bestellungStornieren">
+            <input message="tns:bestellungStornierenRequestMessage"/>
+            <output message="tns:bestellungStornierenResponseMessage"/>
+        </operation>
+        <operation name="gelbfallEntscheidung">
+            <input message="tns:gelbfallEntscheidungRequestMessage"/>
+            <output message="tns:gelbfallEntscheidungResponseMessage"/>
+        </operation>
+        <operation name="managerEntscheidung">
+            <input message="tns:managerEntscheidungRequestMessage"/>
+            <output message="tns:managerEntscheidungResponseMessage"/>
+        </operation>
+    </portType>
+
+    <binding name="BestellungFreigabeBinding" type="tns:BestellungFreigabePortType">
+        <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+        <operation name="bestellungAnlegen">
+            <soap:operation soapAction=""/>
+            <input><soap:body use="literal"/></input>
+            <output><soap:body use="literal"/></output>
+        </operation>
+        <operation name="bestellungStornieren">
+            <soap:operation soapAction=""/>
+            <input><soap:body use="literal"/></input>
+            <output><soap:body use="literal"/></output>
+        </operation>
+        <operation name="gelbfallEntscheidung">
+            <soap:operation soapAction=""/>
+            <input><soap:body use="literal"/></input>
+            <output><soap:body use="literal"/></output>
+        </operation>
+        <operation name="managerEntscheidung">
+            <soap:operation soapAction=""/>
+            <input><soap:body use="literal"/></input>
+            <output><soap:body use="literal"/></output>
+        </operation>
+    </binding>
+
+    <service name="BestellungFreigabeProcessService">
+        <port name="BestellungFreigabePort" binding="tns:BestellungFreigabeBinding">
+            <soap:address location="http://localhost:8080/ode/processes/BestellungFreigabeProcess"/>
+        </port>
+    </service>
+
+    <!-- PartnerLinkType fuer den Aufrufer des Prozesses (ODE = Provider) -->
+    <plnk:partnerLinkType name="BestellungFreigabePLT">
+        <plnk:role name="BestellungFreigabeProvider" portType="tns:BestellungFreigabePortType"/>
+    </plnk:partnerLinkType>
+
+    <!--
+        Korrelationsset-Grundlage: eine Property "bestellungIdProperty", ueber die
+        alle vier eingehenden Operationen (anlegen initiiert, die drei anderen
+        referenzieren) derselben Prozessinstanz zugeordnet werden.
+    -->
+    <vprop:property name="bestellungIdProperty" type="xsd:long"/>
+
+    <!--
+        WICHTIG: In WS-BPEL 2.0 ist "query" bei propertyAlias ein KIND-ELEMENT
+        (<vprop:query>...</vprop:query>), KEIN Attribut (siehe ws-bpel_varprop.xsd,
+        tPropertyAlias). Ein query="..."-Attribut wird von ODE 1.3.8 stillschweigend
+        ignoriert (kein Schema-Validierungsfehler beim Compile) - beobachtbares
+        Symptom war ein Korrelationswert "nullnull" in der ODE-Instanzuebersicht und
+        dadurch niemals zustellbare Folgenachrichten (initiate="no" haengt endlos,
+        bis der generische Axis2-MEX-Timeout nach 120s zuschlaegt).
+        Query relativ zum Root-Element des Parts (das Part ist bereits das jeweilige
+        Wrapper-Element, siehe part-Deklaration mit element=...).
+    -->
+    <vprop:propertyAlias propertyName="tns:bestellungIdProperty"
+                          messageType="tns:bestellungAnlegenRequestMessage"
+                          part="parameters">
+        <vprop:query>/bestellungId</vprop:query>
+    </vprop:propertyAlias>
+    <vprop:propertyAlias propertyName="tns:bestellungIdProperty"
+                          messageType="tns:bestellungStornierenRequestMessage"
+                          part="parameters">
+        <vprop:query>/bestellungId</vprop:query>
+    </vprop:propertyAlias>
+    <vprop:propertyAlias propertyName="tns:bestellungIdProperty"
+                          messageType="tns:gelbfallEntscheidungRequestMessage"
+                          part="parameters">
+        <vprop:query>/bestellungId</vprop:query>
+    </vprop:propertyAlias>
+    <vprop:propertyAlias propertyName="tns:bestellungIdProperty"
+                          messageType="tns:managerEntscheidungRequestMessage"
+                          part="parameters">
+        <vprop:query>/bestellungId</vprop:query>
+    </vprop:propertyAlias>
+</definitions>

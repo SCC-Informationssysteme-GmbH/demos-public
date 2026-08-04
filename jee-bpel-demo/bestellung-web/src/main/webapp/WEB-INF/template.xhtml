@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="jakarta.faces.facelets"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Bestellfreigabe-Demo</title>
+</h:head>
+<h:body>
+    <div style="max-width: 1600px; margin: 0; font-family: sans-serif;">
+        <h1>Bestellfreigabe-Demo (BPEL/Apache ODE)</h1>
+        <div style="display: flex; gap: 2em;">
+            <div style="display: flex; flex-direction: column; gap: 0.5em; padding: 0 1.5em 0 0; margin: 0; border-right: 1px solid #ccc; min-width: 180px;">
+                <p:button outcome="/neue-bestellung" value="Neue Bestellung" style="width:100%"/>
+                <p:button outcome="/bestellungen" value="Bestellungen" style="width:100%"/>
+                <p:button outcome="/gelbfall" value="Gelbfallbearbeitung" style="width:100%"/>
+                <p:button outcome="/managerfreigabe" value="Manager-Freigabe" style="width:100%"/>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+                <style>
+                    #globalMessages .ui-messages-info { background:#e8f5e9; border-color:#a5d6a7; color:#2e7d32; }
+                    #globalMessages .ui-messages-info .ui-messages-icon { color:#2e7d32; }
+                </style>
+                <p:messages id="globalMessages" globalOnly="true" showDetail="false" style="margin-bottom:1em"/>
+                <ui:insert name="content"/>
+            </div>
+        </div>
+    </div>
+</h:body>
+</html>

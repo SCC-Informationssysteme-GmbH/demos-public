@@ -1,0 +1,33 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+    <f:metadata>
+        <f:event type="preRenderView" listener="#{neueBestellungBean.hinweisAnzeigen}"/>
+    </f:metadata>
+    <ui:define name="content">
+        <h:form id="neueBestellungForm">
+            <h2>Neue Bestellung anlegen</h2>
+            <p:messages id="neueBestellungMessages" globalOnly="false" showDetail="false" style="margin-bottom:1em"/>
+            <p:panelGrid columns="2" layout="tabular">
+                <p:outputLabel for="kundeName" value="Kunde:"/>
+                <p:inputText id="kundeName" value="#{neueBestellungBean.kundeName}"
+                             required="true" requiredMessage="Kunde darf nicht leer sein."/>
+
+                <p:outputLabel for="kundeEmail" value="E-Mail:"/>
+                <p:inputText id="kundeEmail" value="#{neueBestellungBean.kundeEmail}"
+                             required="true" requiredMessage="E-Mail darf nicht leer sein."/>
+
+                <p:outputLabel for="betrag" value="Betrag:"/>
+                <p:inputNumber id="betrag" value="#{neueBestellungBean.betrag}" decimalPlaces="2"
+                               decimalSeparator="," thousandSeparator="."
+                               required="true" requiredMessage="Betrag darf nicht leer sein."/>
+            </p:panelGrid>
+            <p:commandButton value="Anlegen" style="margin-top:12px;background:#e3f2fd;border-color:#90caf9;color:#1565c0"
+                              action="#{neueBestellungBean.anlegen}"
+                              update=":neueBestellungForm"/>
+        </h:form>
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,716 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    BPEL-Prozess "BestellungFreigabeProcess": orchestriert die Freigabe einer
+    Bestellung ueber drei Pfade (Gelbfall bei Pruefungsfehler, automatische
+    Freigabe unter 10000, Manager-Freigabe mit Eskalation ab 10000) und
+    unterstuetzt jederzeitigen Abbruch (Korrelation + eventHandlers/Fault +
+    Kompensation). WildFly bleibt System of Record fuer den Bestellstatus -
+    ODE ist reiner Orchestrator, das Endergebnis kommt nie per finalem <reply>,
+    sondern ueber statusAktualisieren-Aufrufe zurueck (der Prozess kann Tage
+    laufen, waehrend er auf eine Sachbearbeiter-/Managerentscheidung wartet).
+-->
+<process name="BestellungFreigabeProcess"
+         targetNamespace="http://jeebpeldemo.scc.de/bpel/bestellungFreigabe"
+         xmlns="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+         xmlns:tns="http://jeebpeldemo.scc.de/bpel/bestellungFreigabe"
+         xmlns:pwns="http://jeebpeldemo.scc.de/bpel/bestellungFreigabe.wsdl"
+         xmlns:prns="http://jeebpeldemo.scc.de/bestellungPruefung"
+         xmlns:gns="http://jeebpeldemo.scc.de/gelbfall"
+         xmlns:fns="http://jeebpeldemo.scc.de/bestellungFreigabe"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+    <import namespace="http://jeebpeldemo.scc.de/bpel/bestellungFreigabe.wsdl"
+            location="BestellungFreigabeProcess.wsdl"
+            importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <import namespace="http://jeebpeldemo.scc.de/bestellungPruefung"
+            location="BestellungPruefungService.wsdl"
+            importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <import namespace="http://jeebpeldemo.scc.de/gelbfall"
+            location="GelbfallService.wsdl"
+            importType="http://schemas.xmlsoap.org/wsdl/"/>
+    <import namespace="http://jeebpeldemo.scc.de/bestellungFreigabe"
+            location="BestellungFreigabeService.wsdl"
+            importType="http://schemas.xmlsoap.org/wsdl/"/>
+
+    <partnerLinks>
+        <partnerLink name="client"
+                     partnerLinkType="pwns:BestellungFreigabePLT"
+                     myRole="BestellungFreigabeProvider"/>
+        <partnerLink name="pruefungPartner"
+                     partnerLinkType="prns:BestellungPruefungPartnerLT"
+                     partnerRole="BestellungPruefungProvider"/>
+        <partnerLink name="gelbfallPartner"
+                     partnerLinkType="gns:GelbfallPartnerLT"
+                     partnerRole="GelbfallProvider"/>
+        <partnerLink name="freigabePartner"
+                     partnerLinkType="fns:BestellungFreigabePartnerLT"
+                     partnerRole="BestellungFreigabeProvider"/>
+    </partnerLinks>
+
+    <variables>
+        <!-- Client-facing Nachrichten (die vier ueber BestellungKorrelation erreichbaren Operationen) -->
+        <variable name="bestellungAnlegenRequest" messageType="pwns:bestellungAnlegenRequestMessage"/>
+        <variable name="bestellungAnlegenResponse" messageType="pwns:bestellungAnlegenResponseMessage"/>
+        <variable name="gelbfallEntscheidungRequest" messageType="pwns:gelbfallEntscheidungRequestMessage"/>
+        <variable name="gelbfallEntscheidungResponse" messageType="pwns:gelbfallEntscheidungResponseMessage"/>
+        <variable name="managerEntscheidungRequest" messageType="pwns:managerEntscheidungRequestMessage"/>
+        <variable name="managerEntscheidungResponse" messageType="pwns:managerEntscheidungResponseMessage"/>
+
+        <!-- Zentraler Status-Schreiber Richtung WildFly - an vielen Stellen wiederverwendet -->
+        <variable name="statusAktualisierenRequest" messageType="fns:statusAktualisierenRequestMessage"/>
+
+        <!-- einfache Prozessvariablen -->
+        <variable name="bestellungId" type="xsd:long"/>
+        <variable name="betrag" type="xsd:decimal"/>
+    </variables>
+
+    <correlationSets>
+        <correlationSet name="BestellungKorrelation" properties="pwns:bestellungIdProperty"/>
+    </correlationSets>
+
+    <sequence name="main">
+
+        <receive name="empfangeBestellungAnlegen"
+                 partnerLink="client"
+                 portType="pwns:BestellungFreigabePortType"
+                 operation="bestellungAnlegen"
+                 variable="bestellungAnlegenRequest"
+                 createInstance="yes">
+            <correlations>
+                <correlation set="BestellungKorrelation" initiate="yes"/>
+            </correlations>
+        </receive>
+
+        <assign name="initVariablen">
+            <copy>
+                <from>$bestellungAnlegenRequest.parameters/bestellungId</from>
+                <to>$bestellungId</to>
+            </copy>
+            <copy>
+                <from>$bestellungAnlegenRequest.parameters/betrag</from>
+                <to>$betrag</to>
+            </copy>
+            <!-- BPEL kann kein <copy> in ein noch nicht existierendes Zielelement machen;
+                 daher zuerst per Literal ein leeres Zielelement anlegen, dann Wert kopieren.
+                 elementFormDefault ist in unseren XSDs nicht gesetzt (Default "unqualified"),
+                 Kind-Elemente duerfen daher keinen Namespace-Praefix/-Default erben. -->
+            <copy>
+                <from>
+                    <literal>
+                        <bestellungAnlegenResponse xmlns="http://jeebpeldemo.scc.de/bpel/bestellungFreigabe.wsdl">
+                            <angenommen xmlns="">true</angenommen>
+                        </bestellungAnlegenResponse>
+                    </literal>
+                </from>
+                <to>$bestellungAnlegenResponse.parameters</to>
+            </copy>
+            <!-- statusAktualisierenRequest einmalig initialisieren - alle spaeteren
+                 Wiederverwendungen ueberschreiben nur noch das status-Kindelement -->
+            <copy>
+                <from>
+                    <literal>
+                        <statusAktualisieren xmlns="http://jeebpeldemo.scc.de/bestellungFreigabe">
+                            <bestellungId xmlns="">0</bestellungId>
+                            <status xmlns="">NEU</status>
+                        </statusAktualisieren>
+                    </literal>
+                </from>
+                <to>$statusAktualisierenRequest.parameters</to>
+            </copy>
+            <copy>
+                <from>$bestellungId</from>
+                <to>$statusAktualisierenRequest.parameters/bestellungId</to>
+            </copy>
+        </assign>
+
+        <reply name="bestaetigeAnnahme"
+               partnerLink="client"
+               portType="pwns:BestellungFreigabePortType"
+               operation="bestellungAnlegen"
+               variable="bestellungAnlegenResponse"/>
+
+        <!--
+            Ab hier laeuft der Prozess asynchron weiter (kein finales <reply> mehr -
+            das Ergebnis kommt ueber statusAktualisieren-Aufrufe an WildFly zurueck).
+            Abbruch ist jederzeit ueber den eventHandler moeglich, auch waehrend eines
+            gerade laufenden <invoke> oder <pick> - ein <pick> allein koennte das an
+            beliebiger Stelle im Ablauf nicht abbilden, ein Fault schon.
+        -->
+        <scope name="Ablauf">
+
+            <variables>
+                <variable name="bestellungStornierenRequest" messageType="pwns:bestellungStornierenRequestMessage"/>
+                <variable name="bestellungStornierenResponse" messageType="pwns:bestellungStornierenResponseMessage"/>
+                <variable name="pruefeBestellungRequest" messageType="prns:pruefeBestellungRequestMessage"/>
+                <variable name="pruefeBestellungResponse" messageType="prns:pruefeBestellungResponseMessage"/>
+                <variable name="gueltig" type="xsd:boolean"/>
+            </variables>
+
+            <faultHandlers>
+                <catch faultName="tns:bestellungStorniertFault">
+                    <sequence>
+                        <!-- kompensiert alle bereits abgeschlossenen Kind-Scopes
+                             (AutoFreigabe/ManagerFreigabe) in umgekehrter Reihenfolge -->
+                        <compensate/>
+                        <assign>
+                            <copy>
+                                <from>'STORNIERT'</from>
+                                <to>$statusAktualisierenRequest.parameters/status</to>
+                            </copy>
+                        </assign>
+                        <invoke name="aktualisiereStatusNachStorno"
+                                partnerLink="freigabePartner"
+                                portType="fns:BestellungFreigabePartnerPortType"
+                                operation="statusAktualisieren"
+                                inputVariable="statusAktualisierenRequest"/>
+                    </sequence>
+                </catch>
+                <catchAll>
+                    <sequence>
+                        <assign>
+                            <copy>
+                                <from>'FEHLER'</from>
+                                <to>$statusAktualisierenRequest.parameters/status</to>
+                            </copy>
+                        </assign>
+                        <invoke name="aktualisiereStatusNachFehler"
+                                partnerLink="freigabePartner"
+                                portType="fns:BestellungFreigabePartnerPortType"
+                                operation="statusAktualisieren"
+                                inputVariable="statusAktualisierenRequest"/>
+                    </sequence>
+                </catchAll>
+            </faultHandlers>
+
+            <eventHandlers>
+                <onEvent partnerLink="client"
+                         portType="pwns:BestellungFreigabePortType"
+                         operation="bestellungStornieren"
+                         variable="bestellungStornierenRequest"
+                         messageType="pwns:bestellungStornierenRequestMessage">
+                    <correlations>
+                        <correlation set="BestellungKorrelation" initiate="no"/>
+                    </correlations>
+                    <!--
+                        ODE 1.3.8 hat einen Engine-Bug in EH_EVENT (ClassCastException
+                        "OSequence cannot be cast to OScope"), wenn die onEvent-Aktivitaet
+                        direkt eine <sequence> ist statt eines <scope>. Workaround: die
+                        Sequence in ein (funktional leeres) <scope> einpacken.
+                    -->
+                    <scope name="StornoHandler">
+                        <sequence>
+                            <assign name="bestaetigeStorno">
+                                <copy>
+                                    <from>
+                                        <literal>
+                                            <bestellungStornierenResponse xmlns="http://jeebpeldemo.scc.de/bpel/bestellungFreigabe.wsdl">
+                                                <angenommen xmlns="">true</angenommen>
+                                            </bestellungStornierenResponse>
+                                        </literal>
+                                    </from>
+                                    <to>$bestellungStornierenResponse.parameters</to>
+                                </copy>
+                            </assign>
+                            <reply partnerLink="client"
+                                   portType="pwns:BestellungFreigabePortType"
+                                   operation="bestellungStornieren"
+                                   variable="bestellungStornierenResponse"/>
+                            <!-- Wurf des Fault beendet die aktuell laufende Primaeraktivitaet
+                                 des Scopes sauber (auch mitten in einem <pick>) und uebergibt
+                                 an obigen faultHandler, der danach erst <compensate> ausfuehrt -->
+                            <throw faultName="tns:bestellungStorniertFault"/>
+                        </sequence>
+                    </scope>
+                </onEvent>
+            </eventHandlers>
+
+            <sequence name="mainFlow">
+
+                <sequence name="Pruefung">
+                    <assign name="mappePruefungsanfrage">
+                        <copy>
+                            <from>
+                                <literal>
+                                    <pruefeBestellung xmlns="http://jeebpeldemo.scc.de/bestellungPruefung">
+                                        <bestellungId xmlns="">0</bestellungId>
+                                    </pruefeBestellung>
+                                </literal>
+                            </from>
+                            <to>$pruefeBestellungRequest.parameters</to>
+                        </copy>
+                        <copy>
+                            <from>$bestellungId</from>
+                            <to>$pruefeBestellungRequest.parameters/bestellungId</to>
+                        </copy>
+                    </assign>
+                    <invoke name="rufePruefungAuf"
+                            partnerLink="pruefungPartner"
+                            portType="prns:BestellungPruefungPortType"
+                            operation="pruefeBestellung"
+                            inputVariable="pruefeBestellungRequest"
+                            outputVariable="pruefeBestellungResponse"/>
+                    <assign name="uebernehmePruefungsergebnis">
+                        <copy>
+                            <from>$pruefeBestellungResponse.parameters/gueltig</from>
+                            <to>$gueltig</to>
+                        </copy>
+                    </assign>
+                </sequence>
+
+                <if>
+                    <condition>$gueltig = false()</condition>
+
+                    <!-- Pfad 1: Pruefung fehlgeschlagen -> Gelbfallbearbeitung, kein Timeout -->
+                    <scope name="Gelbfall">
+                        <variables>
+                            <variable name="gelbfallEroeffnenRequest" messageType="gns:gelbfallEroeffnenRequestMessage"/>
+                            <variable name="gelbfallEroeffnenResponse" messageType="gns:gelbfallEroeffnenResponseMessage"/>
+                        </variables>
+                        <sequence>
+                            <assign name="mappeGelbfallAnfrage">
+                                <copy>
+                                    <from>
+                                        <literal>
+                                            <gelbfallEroeffnen xmlns="http://jeebpeldemo.scc.de/gelbfall">
+                                                <bestellungId xmlns="">0</bestellungId>
+                                                <grund xmlns="">Pruefung fehlgeschlagen</grund>
+                                            </gelbfallEroeffnen>
+                                        </literal>
+                                    </from>
+                                    <to>$gelbfallEroeffnenRequest.parameters</to>
+                                </copy>
+                                <copy>
+                                    <from>$bestellungId</from>
+                                    <to>$gelbfallEroeffnenRequest.parameters/bestellungId</to>
+                                </copy>
+                                <copy>
+                                    <from>concat('Pruefung fehlgeschlagen: ', $pruefeBestellungResponse.parameters/fehlerCode)</from>
+                                    <to>$gelbfallEroeffnenRequest.parameters/grund</to>
+                                </copy>
+                            </assign>
+                            <invoke name="eroeffneGelbfall"
+                                    partnerLink="gelbfallPartner"
+                                    portType="gns:GelbfallPortType"
+                                    operation="gelbfallEroeffnen"
+                                    inputVariable="gelbfallEroeffnenRequest"
+                                    outputVariable="gelbfallEroeffnenResponse"/>
+                            <!-- gelbfallEroeffnen setzt den Bestellstatus serverseitig
+                                 bereits auf GELBFALL - kein zusaetzlicher statusAktualisieren-Aufruf noetig -->
+                            <pick>
+                                <onMessage partnerLink="client"
+                                           portType="pwns:BestellungFreigabePortType"
+                                           operation="gelbfallEntscheidung"
+                                           variable="gelbfallEntscheidungRequest">
+                                    <correlations>
+                                        <correlation set="BestellungKorrelation" initiate="no"/>
+                                    </correlations>
+                                    <sequence>
+                                        <assign name="bestaetigeGelbfallEntscheidung">
+                                            <copy>
+                                                <from>
+                                                    <literal>
+                                                        <gelbfallEntscheidungResponse xmlns="http://jeebpeldemo.scc.de/bpel/bestellungFreigabe.wsdl">
+                                                            <angenommen xmlns="">true</angenommen>
+                                                        </gelbfallEntscheidungResponse>
+                                                    </literal>
+                                                </from>
+                                                <to>$gelbfallEntscheidungResponse.parameters</to>
+                                            </copy>
+                                        </assign>
+                                        <reply partnerLink="client"
+                                               portType="pwns:BestellungFreigabePortType"
+                                               operation="gelbfallEntscheidung"
+                                               variable="gelbfallEntscheidungResponse"/>
+                                        <if>
+                                            <condition>$gelbfallEntscheidungRequest.parameters/freigegeben = true()</condition>
+                                            <assign>
+                                                <copy>
+                                                    <from>'FREIGEGEBEN'</from>
+                                                    <to>$statusAktualisierenRequest.parameters/status</to>
+                                                </copy>
+                                            </assign>
+                                            <else>
+                                                <assign>
+                                                    <copy>
+                                                        <from>'ABGELEHNT'</from>
+                                                        <to>$statusAktualisierenRequest.parameters/status</to>
+                                                    </copy>
+                                                </assign>
+                                            </else>
+                                        </if>
+                                        <invoke name="aktualisiereStatusNachGelbfall"
+                                                partnerLink="freigabePartner"
+                                                portType="fns:BestellungFreigabePartnerPortType"
+                                                operation="statusAktualisieren"
+                                                inputVariable="statusAktualisierenRequest"/>
+                                    </sequence>
+                                </onMessage>
+                            </pick>
+                        </sequence>
+                    </scope>
+
+                    <else>
+                        <if>
+                            <condition>$betrag &lt; 10000</condition>
+
+                            <!-- Pfad 2: valide und Betrag < 10000 -> automatische Freigabe -->
+                            <scope name="AutoFreigabe">
+                                <variables>
+                                    <variable name="automatischFreigebenRequest" messageType="fns:automatischFreigebenRequestMessage"/>
+                                    <variable name="automatischFreigebenResponse" messageType="fns:automatischFreigebenResponseMessage"/>
+                                    <variable name="kompensationFreigebenRequest" messageType="fns:kompensationFreigebenRequestMessage"/>
+                                </variables>
+                                <compensationHandler>
+                                    <sequence>
+                                        <assign>
+                                            <copy>
+                                                <from>
+                                                    <literal>
+                                                        <kompensationFreigeben xmlns="http://jeebpeldemo.scc.de/bestellungFreigabe">
+                                                            <bestellungId xmlns="">0</bestellungId>
+                                                        </kompensationFreigeben>
+                                                    </literal>
+                                                </from>
+                                                <to>$kompensationFreigebenRequest.parameters</to>
+                                            </copy>
+                                            <copy>
+                                                <from>$bestellungId</from>
+                                                <to>$kompensationFreigebenRequest.parameters/bestellungId</to>
+                                            </copy>
+                                        </assign>
+                                        <invoke name="kompensiereAutoFreigabe"
+                                                partnerLink="freigabePartner"
+                                                portType="fns:BestellungFreigabePartnerPortType"
+                                                operation="kompensationFreigeben"
+                                                inputVariable="kompensationFreigebenRequest"/>
+                                    </sequence>
+                                </compensationHandler>
+                                <sequence>
+                                    <assign name="mappeAutoFreigabeAnfrage">
+                                        <copy>
+                                            <from>
+                                                <literal>
+                                                    <automatischFreigeben xmlns="http://jeebpeldemo.scc.de/bestellungFreigabe">
+                                                        <bestellungId xmlns="">0</bestellungId>
+                                                    </automatischFreigeben>
+                                                </literal>
+                                            </from>
+                                            <to>$automatischFreigebenRequest.parameters</to>
+                                        </copy>
+                                        <copy>
+                                            <from>$bestellungId</from>
+                                            <to>$automatischFreigebenRequest.parameters/bestellungId</to>
+                                        </copy>
+                                    </assign>
+                                    <invoke name="rufeAutomatischFreigebenAuf"
+                                            partnerLink="freigabePartner"
+                                            portType="fns:BestellungFreigabePartnerPortType"
+                                            operation="automatischFreigeben"
+                                            inputVariable="automatischFreigebenRequest"
+                                            outputVariable="automatischFreigebenResponse"/>
+                                    <!-- automatischFreigeben setzt den Status serverseitig
+                                         bereits auf FREIGEGEBEN - kein Zusatzaufruf noetig -->
+                                </sequence>
+                            </scope>
+
+                            <!-- Pfad 3: valide und Betrag >= 10000 -> Manager-Freigabe (Vier-Augen-Prinzip) -->
+                            <else>
+                                <scope name="ManagerFreigabe">
+                                    <variables>
+                                        <variable name="managerFreigabeAnfordernRequest" messageType="fns:managerFreigabeAnfordernRequestMessage"/>
+                                        <variable name="managerFreigabeAnfordernResponse" messageType="fns:managerFreigabeAnfordernResponseMessage"/>
+                                        <variable name="managerFreigabeEskalierenRequest" messageType="fns:managerFreigabeEskalierenRequestMessage"/>
+                                        <variable name="kompensationFreigebenRequest" messageType="fns:kompensationFreigebenRequestMessage"/>
+                                        <variable name="aufgabeId" type="xsd:long"/>
+                                    </variables>
+                                    <compensationHandler>
+                                        <sequence>
+                                            <assign>
+                                                <copy>
+                                                    <from>
+                                                        <literal>
+                                                            <kompensationFreigeben xmlns="http://jeebpeldemo.scc.de/bestellungFreigabe">
+                                                                <bestellungId xmlns="">0</bestellungId>
+                                                            </kompensationFreigeben>
+                                                        </literal>
+                                                    </from>
+                                                    <to>$kompensationFreigebenRequest.parameters</to>
+                                                </copy>
+                                                <copy>
+                                                    <from>$bestellungId</from>
+                                                    <to>$kompensationFreigebenRequest.parameters/bestellungId</to>
+                                                </copy>
+                                            </assign>
+                                            <invoke name="kompensiereManagerFreigabe"
+                                                    partnerLink="freigabePartner"
+                                                    portType="fns:BestellungFreigabePartnerPortType"
+                                                    operation="kompensationFreigeben"
+                                                    inputVariable="kompensationFreigebenRequest"/>
+                                        </sequence>
+                                    </compensationHandler>
+                                    <sequence>
+                                        <assign name="mappeManagerAnfrage">
+                                            <copy>
+                                                <from>
+                                                    <literal>
+                                                        <managerFreigabeAnfordern xmlns="http://jeebpeldemo.scc.de/bestellungFreigabe">
+                                                            <bestellungId xmlns="">0</bestellungId>
+                                                        </managerFreigabeAnfordern>
+                                                    </literal>
+                                                </from>
+                                                <to>$managerFreigabeAnfordernRequest.parameters</to>
+                                            </copy>
+                                            <copy>
+                                                <from>$bestellungId</from>
+                                                <to>$managerFreigabeAnfordernRequest.parameters/bestellungId</to>
+                                            </copy>
+                                        </assign>
+                                        <invoke name="fordereManagerFreigabeAn"
+                                                partnerLink="freigabePartner"
+                                                portType="fns:BestellungFreigabePartnerPortType"
+                                                operation="managerFreigabeAnfordern"
+                                                inputVariable="managerFreigabeAnfordernRequest"
+                                                outputVariable="managerFreigabeAnfordernResponse"/>
+                                        <!-- managerFreigabeAnfordern setzt den Status serverseitig
+                                             bereits auf MANAGER_FREIGABE -->
+                                        <assign name="uebernehmeAufgabeId">
+                                            <copy>
+                                                <from>$managerFreigabeAnfordernResponse.parameters/aufgabeId</from>
+                                                <to>$aufgabeId</to>
+                                            </copy>
+                                        </assign>
+
+                                        <pick>
+                                            <onMessage partnerLink="client"
+                                                       portType="pwns:BestellungFreigabePortType"
+                                                       operation="managerEntscheidung"
+                                                       variable="managerEntscheidungRequest">
+                                                <correlations>
+                                                    <correlation set="BestellungKorrelation" initiate="no"/>
+                                                </correlations>
+                                                <sequence>
+                                                    <assign name="bestaetigeManagerEntscheidung">
+                                                        <copy>
+                                                            <from>
+                                                                <literal>
+                                                                    <managerEntscheidungResponse xmlns="http://jeebpeldemo.scc.de/bpel/bestellungFreigabe.wsdl">
+                                                                        <angenommen xmlns="">true</angenommen>
+                                                                    </managerEntscheidungResponse>
+                                                                </literal>
+                                                            </from>
+                                                            <to>$managerEntscheidungResponse.parameters</to>
+                                                        </copy>
+                                                    </assign>
+                                                    <reply partnerLink="client"
+                                                           portType="pwns:BestellungFreigabePortType"
+                                                           operation="managerEntscheidung"
+                                                           variable="managerEntscheidungResponse"/>
+                                                    <if>
+                                                        <condition>$managerEntscheidungRequest.parameters/freigegeben = true()</condition>
+                                                        <assign>
+                                                            <copy>
+                                                                <from>'FREIGEGEBEN'</from>
+                                                                <to>$statusAktualisierenRequest.parameters/status</to>
+                                                            </copy>
+                                                        </assign>
+                                                        <else>
+                                                            <assign>
+                                                                <copy>
+                                                                    <from>'ABGELEHNT'</from>
+                                                                    <to>$statusAktualisierenRequest.parameters/status</to>
+                                                                </copy>
+                                                            </assign>
+                                                        </else>
+                                                    </if>
+                                                    <invoke name="aktualisiereStatusNachManagerEntscheidung"
+                                                            partnerLink="freigabePartner"
+                                                            portType="fns:BestellungFreigabePartnerPortType"
+                                                            operation="statusAktualisieren"
+                                                            inputVariable="statusAktualisierenRequest"/>
+                                                </sequence>
+                                            </onMessage>
+
+                                            <!-- Eskalation: Manager reagiert nicht innerhalb der Frist.
+                                                 Demo-Frist PT2M (real: z.B. P2D) - bewusst als Literal
+                                                 statt Variable, da fuer dieses Demo-Szenario keine
+                                                 dynamische Fristberechnung noetig ist. -->
+                                            <onAlarm>
+                                                <for>'PT2M'</for>
+                                                <sequence name="escalation">
+                                                    <assign name="mappeEskalation">
+                                                        <copy>
+                                                            <from>
+                                                                <literal>
+                                                                    <managerFreigabeEskalieren xmlns="http://jeebpeldemo.scc.de/bestellungFreigabe">
+                                                                        <bestellungId xmlns="">0</bestellungId>
+                                                                        <aufgabeId xmlns="">0</aufgabeId>
+                                                                    </managerFreigabeEskalieren>
+                                                                </literal>
+                                                            </from>
+                                                            <to>$managerFreigabeEskalierenRequest.parameters</to>
+                                                        </copy>
+                                                        <copy>
+                                                            <from>$bestellungId</from>
+                                                            <to>$managerFreigabeEskalierenRequest.parameters/bestellungId</to>
+                                                        </copy>
+                                                        <copy>
+                                                            <from>$aufgabeId</from>
+                                                            <to>$managerFreigabeEskalierenRequest.parameters/aufgabeId</to>
+                                                        </copy>
+                                                    </assign>
+                                                    <invoke name="eskaliereManagerFreigabe"
+                                                            partnerLink="freigabePartner"
+                                                            portType="fns:BestellungFreigabePartnerPortType"
+                                                            operation="managerFreigabeEskalieren"
+                                                            inputVariable="managerFreigabeEskalierenRequest"/>
+                                                    <!-- managerFreigabeEskalieren setzt den Status
+                                                         serverseitig bereits auf ESKALIERT -->
+
+                                                    <!-- Eskalierter Fall wird an dieselbe Gelbfallbearbeitung
+                                                         weitergereicht statt eine dritte Rolle einzufuehren;
+                                                         zweiter, verschachtelter Pick mit kuerzerem Fallback-
+                                                         Timeout verhindert eine ewig offene Instanz -->
+                                                    <scope name="EskalationAlsGelbfall">
+                                                        <variables>
+                                                            <variable name="gelbfallEroeffnenRequest" messageType="gns:gelbfallEroeffnenRequestMessage"/>
+                                                            <variable name="gelbfallEroeffnenResponse" messageType="gns:gelbfallEroeffnenResponseMessage"/>
+                                                            <variable name="gelbfallSchliessenRequest" messageType="gns:gelbfallSchliessenRequestMessage"/>
+                                                        </variables>
+                                                        <sequence>
+                                                            <assign name="mappeEskalationsGelbfall">
+                                                                <copy>
+                                                                    <from>
+                                                                        <literal>
+                                                                            <gelbfallEroeffnen xmlns="http://jeebpeldemo.scc.de/gelbfall">
+                                                                                <bestellungId xmlns="">0</bestellungId>
+                                                                                <grund xmlns="">Manager-Freigabe-Timeout - eskaliert</grund>
+                                                                            </gelbfallEroeffnen>
+                                                                        </literal>
+                                                                    </from>
+                                                                    <to>$gelbfallEroeffnenRequest.parameters</to>
+                                                                </copy>
+                                                                <copy>
+                                                                    <from>$bestellungId</from>
+                                                                    <to>$gelbfallEroeffnenRequest.parameters/bestellungId</to>
+                                                                </copy>
+                                                            </assign>
+                                                            <invoke name="eroeffneEskalationsGelbfall"
+                                                                    partnerLink="gelbfallPartner"
+                                                                    portType="gns:GelbfallPortType"
+                                                                    operation="gelbfallEroeffnen"
+                                                                    inputVariable="gelbfallEroeffnenRequest"
+                                                                    outputVariable="gelbfallEroeffnenResponse"/>
+                                                            <pick>
+                                                                <onMessage partnerLink="client"
+                                                                           portType="pwns:BestellungFreigabePortType"
+                                                                           operation="gelbfallEntscheidung"
+                                                                           variable="gelbfallEntscheidungRequest">
+                                                                    <correlations>
+                                                                        <correlation set="BestellungKorrelation" initiate="no"/>
+                                                                    </correlations>
+                                                                    <sequence>
+                                                                        <assign name="bestaetigeEskalationsEntscheidung">
+                                                                            <copy>
+                                                                                <from>
+                                                                                    <literal>
+                                                                                        <gelbfallEntscheidungResponse xmlns="http://jeebpeldemo.scc.de/bpel/bestellungFreigabe.wsdl">
+                                                                                            <angenommen xmlns="">true</angenommen>
+                                                                                        </gelbfallEntscheidungResponse>
+                                                                                    </literal>
+                                                                                </from>
+                                                                                <to>$gelbfallEntscheidungResponse.parameters</to>
+                                                                            </copy>
+                                                                        </assign>
+                                                                        <reply partnerLink="client"
+                                                                               portType="pwns:BestellungFreigabePortType"
+                                                                               operation="gelbfallEntscheidung"
+                                                                               variable="gelbfallEntscheidungResponse"/>
+                                                                        <if>
+                                                                            <condition>$gelbfallEntscheidungRequest.parameters/freigegeben = true()</condition>
+                                                                            <assign>
+                                                                                <copy>
+                                                                                    <from>'FREIGEGEBEN'</from>
+                                                                                    <to>$statusAktualisierenRequest.parameters/status</to>
+                                                                                </copy>
+                                                                            </assign>
+                                                                            <else>
+                                                                                <assign>
+                                                                                    <copy>
+                                                                                        <from>'ABGELEHNT'</from>
+                                                                                        <to>$statusAktualisierenRequest.parameters/status</to>
+                                                                                    </copy>
+                                                                                </assign>
+                                                                            </else>
+                                                                        </if>
+                                                                        <invoke name="aktualisiereStatusNachEskalationsEntscheidung"
+                                                                                partnerLink="freigabePartner"
+                                                                                portType="fns:BestellungFreigabePartnerPortType"
+                                                                                operation="statusAktualisieren"
+                                                                                inputVariable="statusAktualisierenRequest"/>
+                                                                    </sequence>
+                                                                </onMessage>
+                                                                <onAlarm>
+                                                                    <for>'PT1M'</for>
+                                                                    <sequence>
+                                                                        <assign name="finalerFallback">
+                                                                            <copy>
+                                                                                <from>'ABGELEHNT'</from>
+                                                                                <to>$statusAktualisierenRequest.parameters/status</to>
+                                                                            </copy>
+                                                                        </assign>
+                                                                        <invoke name="aktualisiereStatusNachFallback"
+                                                                                partnerLink="freigabePartner"
+                                                                                portType="fns:BestellungFreigabePartnerPortType"
+                                                                                operation="statusAktualisieren"
+                                                                                inputVariable="statusAktualisierenRequest"/>
+                                                                        <!-- Ohne diesen Aufruf bliebe die per eroeffneEskalationsGelbfall
+                                                                             angelegte Freigabeaufgabe fuer immer offen (erledigt=false),
+                                                                             obwohl die Bestellung bereits final entschieden ist - die
+                                                                             GUI wuerde einen Freigeben/Ablehnen-Button anzeigen, der nur
+                                                                             noch mit 409 fehlschlagen kann, da ODE hier nicht mehr wartet. -->
+                                                                        <assign name="mappeGelbfallSchliessenNachFallback">
+                                                                            <copy>
+                                                                                <from>
+                                                                                    <literal>
+                                                                                        <gelbfallSchliessen xmlns="http://jeebpeldemo.scc.de/gelbfall">
+                                                                                            <bestellungId xmlns="">0</bestellungId>
+                                                                                            <gelbfallId xmlns="">0</gelbfallId>
+                                                                                            <grund xmlns="">Automatisch abgelehnt (Eskalations-Fallback-Timeout)</grund>
+                                                                                        </gelbfallSchliessen>
+                                                                                    </literal>
+                                                                                </from>
+                                                                                <to>$gelbfallSchliessenRequest.parameters</to>
+                                                                            </copy>
+                                                                            <copy>
+                                                                                <from>$bestellungId</from>
+                                                                                <to>$gelbfallSchliessenRequest.parameters/bestellungId</to>
+                                                                            </copy>
+                                                                            <copy>
+                                                                                <from>$gelbfallEroeffnenResponse.parameters/gelbfallId</from>
+                                                                                <to>$gelbfallSchliessenRequest.parameters/gelbfallId</to>
+                                                                            </copy>
+                                                                        </assign>
+                                                                        <invoke name="schliesseEskalationsGelbfallNachFallback"
+                                                                                partnerLink="gelbfallPartner"
+                                                                                portType="gns:GelbfallPortType"
+                                                                                operation="gelbfallSchliessen"
+                                                                                inputVariable="gelbfallSchliessenRequest"/>
+                                                                    </sequence>
+                                                                </onAlarm>
+                                                            </pick>
+                                                        </sequence>
+                                                    </scope>
+                                                </sequence>
+                                            </onAlarm>
+                                        </pick>
+                                    </sequence>
+                                </scope>
+                            </else>
+                        </if>
+                    </else>
+                </if>
+
+            </sequence>
+        </scope>
+    </sequence>
+</process>

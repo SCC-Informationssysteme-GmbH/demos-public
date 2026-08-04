@@ -1,0 +1,18 @@
+embed-server --std-out=echo --server-config=standalone-full.xml
+
+/subsystem=datasources/jdbc-driver=oracle:add(driver-module-name=com.oracle, driver-class-name=oracle.jdbc.OracleDriver)
+
+data-source add \
+    --name=BestellungDS \
+    --jndi-name=java:/jdbc/BestellungDS \
+    --driver-name=oracle \
+    --connection-url=jdbc:oracle:thin:@oracle-db:1521/FREEPDB1 \
+    --user-name=bestellung \
+    --password=bestellung \
+    --jta=true \
+    --use-ccm=true \
+    --enabled=true
+
+/subsystem=messaging-activemq/server=default/jms-queue=OrderEventsQueue:add(entries=["jms/OrderEventsQueue", "java:/jms/queue/OrderEventsQueue"])
+
+stop-embedded-server

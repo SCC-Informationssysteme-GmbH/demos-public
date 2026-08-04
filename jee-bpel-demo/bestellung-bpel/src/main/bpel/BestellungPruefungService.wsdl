@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Konkrete WSDL des SOAP-Partnerservices BestellungPruefungWebService
+    (EJB-basierter JAX-WS-Endpunkt in bestellung-ejb, Scope "Pruefung" in
+    BestellungFreigabeProcess.bpel). Adressmuster wie im Schwesterprojekt
+    verifiziert: http://<host>:8080/<ejb-jar-name>/<serviceName>/<Implementor>.
+-->
+<definitions name="BestellungPruefungService"
+             targetNamespace="http://jeebpeldemo.scc.de/bestellungPruefung"
+             xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:tns="http://jeebpeldemo.scc.de/bestellungPruefung"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:plnk="http://docs.oasis-open.org/wsbpel/2.0/plnktype">
+
+    <types>
+        <xsd:schema targetNamespace="http://jeebpeldemo.scc.de/bestellungPruefung">
+            <xsd:element name="pruefeBestellung">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="bestellungId" type="xsd:long"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+            <xsd:element name="pruefeBestellungResponse">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="gueltig" type="xsd:boolean"/>
+                        <xsd:element name="fehlerCode" type="xsd:string" minOccurs="0" nillable="true"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+        </xsd:schema>
+    </types>
+
+    <message name="pruefeBestellungRequestMessage">
+        <part name="parameters" element="tns:pruefeBestellung"/>
+    </message>
+    <message name="pruefeBestellungResponseMessage">
+        <part name="parameters" element="tns:pruefeBestellungResponse"/>
+    </message>
+
+    <portType name="BestellungPruefungPortType">
+        <operation name="pruefeBestellung">
+            <input message="tns:pruefeBestellungRequestMessage"/>
+            <output message="tns:pruefeBestellungResponseMessage"/>
+        </operation>
+    </portType>
+
+    <binding name="BestellungPruefungBinding" type="tns:BestellungPruefungPortType">
+        <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+        <operation name="pruefeBestellung">
+            <soap:operation soapAction=""/>
+            <input>
+                <soap:body use="literal"/>
+            </input>
+            <output>
+                <soap:body use="literal"/>
+            </output>
+        </operation>
+    </binding>
+
+    <service name="BestellungPruefungService">
+        <port name="BestellungPruefungWebServicePort" binding="tns:BestellungPruefungBinding">
+            <soap:address location="http://wildfly:8080/bestellung-ejb/BestellungPruefungService/BestellungPruefungWebService"/>
+        </port>
+    </service>
+
+    <plnk:partnerLinkType name="BestellungPruefungPartnerLT">
+        <plnk:role name="BestellungPruefungProvider" portType="tns:BestellungPruefungPortType"/>
+    </plnk:partnerLinkType>
+</definitions>

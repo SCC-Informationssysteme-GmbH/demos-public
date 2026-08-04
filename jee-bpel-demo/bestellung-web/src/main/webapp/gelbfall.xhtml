@@ -1,0 +1,98 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+    <ui:define name="content">
+        <h:form id="gelbfallForm">
+            <h2>Offene Gelbfaelle</h2>
+            <p:dataTable id="gelbfallTable" var="a" value="#{gelbfallQueueBean.aufgaben}" style="width:100%">
+                <p:column headerText="Bestellung" style="width:60px">
+                    <h:outputText value="#{a.bestellungId}"/>
+                </p:column>
+                <p:column headerText="Firma">
+                    <h:outputText value="#{a.bestellungKundeName}"/>
+                </p:column>
+                <p:column headerText="Email">
+                    <h:outputText value="#{a.bestellungKundeEmail}"
+                                  style="#{gelbfallQueueBean.hatFehler(a, 'UNGUELTIGE_MAIL_ADRESSE') ? (gelbfallQueueBean.istKorrigiert(a) ? 'color:green;font-weight:bold' : 'color:red;font-weight:bold') : ''}"/>
+                </p:column>
+                <p:column headerText="Betrag" style="width:100px;text-align:right">
+                    <h:outputText value="#{a.bestellungBetrag}"
+                                  style="#{gelbfallQueueBean.hatFehler(a, 'UNGUELTIGER_BETRAG') ? (gelbfallQueueBean.istKorrigiert(a) ? 'color:green;font-weight:bold' : 'color:red;font-weight:bold') : ''}">
+                        <f:convertNumber pattern="#,##0.00" locale="de"/>
+                    </h:outputText>
+                </p:column>
+                <p:column headerText="Grund">
+                    <h:outputText value="#{a.grund}"/>
+                </p:column>
+                <p:column headerText="Erstellt am">
+                    <h:outputText value="#{a.erstelltAm}">
+                        <f:convertDateTime type="localDateTime" pattern="dd.MM.yyyy HH:mm"/>
+                    </h:outputText>
+                </p:column>
+                <p:column headerText="Aktion">
+                    <p:commandButton value="Freigeben"
+                                      style="margin:0 8px 8px 0;background:#e8f5e9;border-color:#a5d6a7;color:#2e7d32"
+                                      rendered="#{(not gelbfallQueueBean.hatFehler(a, 'UNGUELTIGER_BETRAG') and not gelbfallQueueBean.hatFehler(a, 'UNGUELTIGE_MAIL_ADRESSE')) or gelbfallQueueBean.istKorrigiert(a)}"
+                                      action="#{gelbfallQueueBean.freigeben(a, 'Freigegeben ueber Gelbfall-GUI')}"
+                                      update=":gelbfallForm:gelbfallTable :globalMessages"/>
+                    <p:commandButton value="Bearbeiten"
+                                      style="margin:0 8px 8px 0;background:#e3f2fd;border-color:#90caf9;color:#1565c0"
+                                      rendered="#{(gelbfallQueueBean.hatFehler(a, 'UNGUELTIGER_BETRAG') or gelbfallQueueBean.hatFehler(a, 'UNGUELTIGE_MAIL_ADRESSE')) and not gelbfallQueueBean.istKorrigiert(a)}"
+                                      actionListener="#{gelbfallQueueBean.bearbeiten(a)}"
+                                      process="@this"
+                                      update=":gelbfallForm:korrekturDialog"
+                                      oncomplete="PF('korrekturDialogWidget').show()"/>
+                    <p:commandButton value="Ablehnen"
+                                      style="margin:0 0 8px 0;background:#fdecea;border-color:#f1a9a0;color:#c62828"
+                                      action="#{gelbfallQueueBean.ablehnen(a, 'Abgelehnt ueber Gelbfall-GUI')}"
+                                      update=":gelbfallForm:gelbfallTable :globalMessages"/>
+                </p:column>
+            </p:dataTable>
+
+            <p:dialog id="korrekturDialog" widgetVar="korrekturDialogWidget" header="Bestellung korrigieren" modal="true" resizable="false">
+                <h:panelGrid columns="2" layout="tabular">
+                    <p:outputLabel value="Firma:"/>
+                    <h:outputText value="#{gelbfallQueueBean.bearbeiteteAufgabe.bestellungKundeName}"/>
+
+                    <p:outputLabel for="neueEmail" value="Email:"/>
+                    <h:panelGroup>
+                        <p:inputText id="neueEmail" value="#{gelbfallQueueBean.bearbeiteteEmail}"
+                                      rendered="#{gelbfallQueueBean.hatFehler(gelbfallQueueBean.bearbeiteteAufgabe, 'UNGUELTIGE_MAIL_ADRESSE')}"
+                                      required="true" requiredMessage="Email darf nicht leer sein.">
+                            <f:validateRegex pattern="^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"/>
+                        </p:inputText>
+                        <h:outputText value="#{gelbfallQueueBean.bearbeiteteAufgabe.bestellungKundeEmail}"
+                                      rendered="#{not gelbfallQueueBean.hatFehler(gelbfallQueueBean.bearbeiteteAufgabe, 'UNGUELTIGE_MAIL_ADRESSE')}"/>
+                    </h:panelGroup>
+
+                    <p:outputLabel for="neuerBetrag" value="Betrag:"/>
+                    <h:panelGroup>
+                        <p:inputNumber id="neuerBetrag" value="#{gelbfallQueueBean.bearbeiterBetrag}" decimalPlaces="2"
+                                       decimalSeparator="," thousandSeparator="."
+                                       minValue="0.01"
+                                       rendered="#{gelbfallQueueBean.hatFehler(gelbfallQueueBean.bearbeiteteAufgabe, 'UNGUELTIGER_BETRAG')}"
+                                       required="true" requiredMessage="Betrag darf nicht leer sein.">
+                            <f:validateDoubleRange minimum="0.01"/>
+                        </p:inputNumber>
+                        <h:outputText value="#{gelbfallQueueBean.bearbeiteteAufgabe.bestellungBetrag}"
+                                      rendered="#{not gelbfallQueueBean.hatFehler(gelbfallQueueBean.bearbeiteteAufgabe, 'UNGUELTIGER_BETRAG')}">
+                            <f:convertNumber pattern="#,##0.00" locale="de"/>
+                        </h:outputText>
+                    </h:panelGroup>
+                </h:panelGrid>
+                <p:messages id="korrekturMessages" globalOnly="false" showDetail="false" style="color:#c00;margin-top:1em"/>
+                <f:facet name="footer">
+                    <p:commandButton value="Speichern"
+                                      style="margin-right:8px"
+                                      action="#{gelbfallQueueBean.speichern}"
+                                      update=":gelbfallForm:gelbfallTable :gelbfallForm:korrekturMessages"
+                                      oncomplete="if (!args.validationFailed) { PF('korrekturDialogWidget').hide(); }"/>
+                    <p:commandButton value="Abbrechen" type="button" onclick="PF('korrekturDialogWidget').hide()"/>
+                </f:facet>
+            </p:dialog>
+        </h:form>
+    </ui:define>
+</ui:composition>

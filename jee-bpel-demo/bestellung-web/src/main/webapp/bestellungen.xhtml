@@ -1,0 +1,62 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+    <ui:define name="content">
+        <style>
+            .ui-filter-column .ui-column-title,
+            .ui-filter-column .ui-column-customfilter {
+                display: inline-block;
+                vertical-align: middle;
+            }
+            .ui-filter-column .ui-column-customfilter {
+                margin-left: 8px;
+            }
+        </style>
+        <h:form id="bestellungenForm">
+            <h2>Bestellungen</h2>
+            <p:dataTable var="b" value="#{bestellungenBean.bestellungen}" style="width:100%" widgetVar="bestellungenTable">
+                <p:column headerText="ID" style="width:60px">
+                    <h:outputText value="#{b.id}"/>
+                </p:column>
+                <p:column headerText="Kunde" style="width:150px">
+                    <h:outputText value="#{b.kunde.name}"/>
+                </p:column>
+                <p:column headerText="Betrag" style="width:100px;text-align:right">
+                    <h:outputText value="#{b.betrag}">
+                        <f:convertNumber pattern="#,##0.00" locale="de"/>
+                    </h:outputText>
+                </p:column>
+                <p:column headerText="Status"
+                          style="white-space:nowrap"
+                          filterBy="#{b.status}" filterMatchMode="exact">
+                    <f:facet name="filter">
+                        <p:selectOneMenu onchange="PF('bestellungenTable').filter()" style="width:140px">
+                            <f:selectItem itemLabel="Alle" itemValue="#{null}" noSelectionOption="true"/>
+                            <f:selectItems value="#{bestellungenBean.statusOptionen}"/>
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{b.status}"/>
+                </p:column>
+                <p:column headerText="Aktion">
+                    <p:commandButton value="Prozess starten"
+                                      style="margin:0 8px 8px 0;background:#e3f2fd;border-color:#90caf9;color:#1565c0"
+                                      rendered="#{(b.status == 'NEU' or b.status == 'IN_PRUEFUNG') and not bestellungenBean.istAktionAusgeloest(b.id)}"
+                                      action="#{bestellungenBean.prozessStarten(b.id)}"
+                                      update=":bestellungenForm :globalMessages"/>
+                    <p:commandButton value="Stornieren"
+                                      style="margin:0 0 8px 0;background:#e67e22;border-color:#e67e22;color:#fff"
+                                      rendered="#{(b.status == 'MANAGER_FREIGABE' or b.status == 'ESKALIERT') and not bestellungenBean.istAktionAusgeloest(b.id)}"
+                                      action="#{bestellungenBean.prozessStornieren(b.id)}"
+                                      update=":bestellungenForm :globalMessages"/>
+                    <p:button value="Gelbfallbearbeitung"
+                               style="margin:0 0 8px 0;background:#fff8e1;border-color:#ffd54f;color:#8d6e00"
+                               rendered="#{b.status == 'GELBFALL'}"
+                               outcome="/gelbfall"/>
+                </p:column>
+            </p:dataTable>
+        </h:form>
+    </ui:define>
+</ui:composition>

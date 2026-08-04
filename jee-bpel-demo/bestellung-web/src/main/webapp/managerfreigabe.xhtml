@@ -1,0 +1,49 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+    <ui:define name="content">
+        <h:form id="managerForm">
+            <h2>Offene Manager-Freigaben (Vier-Augen-Prinzip, Betrag &gt;= 10000)</h2>
+            <p:dataTable var="a" value="#{managerQueueBean.aufgaben}" style="width:100%">
+                <p:column headerText="Bestellung" style="width:60px">
+                    <h:outputText value="#{a.bestellungId}"/>
+                </p:column>
+                <p:column headerText="Firma">
+                    <h:outputText value="#{a.bestellungKundeName}"/>
+                </p:column>
+                <p:column headerText="Email">
+                    <h:outputText value="#{a.bestellungKundeEmail}"/>
+                </p:column>
+                <p:column headerText="Betrag" style="width:100px;text-align:right">
+                    <h:outputText value="#{a.bestellungBetrag}">
+                        <f:convertNumber pattern="#,##0.00" locale="de"/>
+                    </h:outputText>
+                </p:column>
+                <p:column headerText="Grund">
+                    <h:outputText value="#{a.grund}"/>
+                </p:column>
+                <p:column headerText="Erstellt am">
+                    <h:outputText value="#{a.erstelltAm}">
+                        <f:convertDateTime type="localDateTime" pattern="dd.MM.yyyy HH:mm"/>
+                    </h:outputText>
+                </p:column>
+                <p:column headerText="Eskaliert">
+                    <h:outputText value="#{a.eskaliert}"/>
+                </p:column>
+                <p:column headerText="Aktion">
+                    <p:commandButton value="Freigeben"
+                                      style="margin:0 8px 8px 0;background:#e8f5e9;border-color:#a5d6a7;color:#2e7d32"
+                                      action="#{managerQueueBean.freigeben(a, 'Freigegeben ueber Manager-GUI')}"
+                                      update=":managerForm :globalMessages"/>
+                    <p:commandButton value="Ablehnen"
+                                      style="margin:0 0 8px 0;background:#fdecea;border-color:#f1a9a0;color:#c62828"
+                                      action="#{managerQueueBean.ablehnen(a, 'Abgelehnt ueber Manager-GUI')}"
+                                      update=":managerForm :globalMessages"/>
+                </p:column>
+            </p:dataTable>
+        </h:form>
+    </ui:define>
+</ui:composition>
