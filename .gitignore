@@ -1,0 +1,5 @@
+# Dieses Repo enthaelt ausschliesslich Snapshots zum Lesen - IDE-lokale
+# Konfiguration gehoert nicht dazu. IntelliJ erzeugt sie beim Import neu,
+# und Dateien wie awsToolkit.xml oder dataSources.xml tragen sonst
+# Profilnamen und Verbindungsdaten nach aussen.
+**/.idea/
