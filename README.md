@@ -1,6 +1,6 @@
 # demos-public
 
-Öffentliche Sammlung ausgewählter Demo-Projekte der SCC Informationssysteme GmbH.
+Öffentliche Sammlung ausgewählter Demo-Projekte der [SCC Informationssysteme GmbH ↗](https://www.scc-gmbh.com).
 
 | Projekt | Beschreibung | Tech-Stack |
 |---|---|---|
