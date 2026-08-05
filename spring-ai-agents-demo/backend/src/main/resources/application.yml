@@ -1,0 +1,107 @@
+server:
+  port: 8110
+
+spring:
+  application:
+    name: ai-agents-backend
+
+  datasource:
+    url: jdbc:h2:mem:tickets;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.2
+    model:
+      # Chat ueber OpenAI, Embeddings lokal (ONNX, all-MiniLM-L6-v2).
+      # Der Schalter ist notwendig, weil der OpenAI-Starter ebenfalls ein
+      # Embedding-Modell mitbringt - ohne ihn waere die Auswahl nicht eindeutig.
+      embedding: transformers
+    vectorstore:
+      qdrant:
+        host: ${QDRANT_HOST:localhost}
+        port: ${QDRANT_GRPC_PORT:6344}
+        collection-name: support-knowledge
+        initialize-schema: true
+
+app:
+  research:
+    # Menge der Treffer, die in den Prompt gehen.
+    top-k: 5
+    # Mindest-Aehnlichkeit 0..1. Vorlaeufig 0 = alles durchlassen; der belastbare
+    # Wert wird aus den geloggten Scores abgeleitet (Log-Level DEBUG auf
+    # com.example.aiagents zeigt score je Treffer).
+    similarity-threshold: 0.0
+
+  notifications:
+    # Eingangsbestaetigungen je Kategorie. Gehen OHNE Mitarbeiter-Freigabe an den
+    # Kunden - deshalb feste Vorlagen statt LLM-Ausgabe. Platzhalter: {ticketId}.
+    #
+    # Ein Eintrag wird nur verschickt, wenn der Plan in der WorkflowPlanRegistry
+    # sendAutoAcknowledgement=true setzt. Fehlt umgekehrt die Vorlage zu einem
+    # sendenden Plan, scheitert der Start - siehe CustomerNotificationService.
+    acknowledgements:
+      FEATURE_WUNSCH: |
+        Guten Tag,
+
+        vielen Dank fuer Ihre Nachricht. Wir haben Ihr Anliegen als Funktionswunsch
+        eingestuft und unter der Referenz {ticketId} fuer unsere Produktplanung
+        aufgenommen.
+
+        Eine Umsetzung koennen wir zum jetzigen Zeitpunkt nicht zusagen. Sollten wir
+        Rueckfragen haben, melden wir uns bei Ihnen.
+
+        Freundliche Gruesse
+        Ihr Support-Team
+
+      VERTRAGSFRAGE: |
+        Guten Tag,
+
+        vielen Dank fuer Ihre Nachricht. Ihre Anfrage betrifft Ihren Vertrag und
+        wurde unter der Referenz {ticketId} an die zustaendige Fachabteilung
+        weitergeleitet.
+
+        Sie erhalten von dort eine Antwort innerhalb eines Werktags. Bitte beachten
+        Sie, dass verbindliche Auskuenfte zu Ihrem Vertrag ausschliesslich von
+        dieser Abteilung kommen.
+
+        Freundliche Gruesse
+        Ihr Support-Team
+
+  knowledge:
+    # Erste Location gewinnt pro Dateiname.
+    #
+    # Beim Start aus dem Quellbaum (IntelliJ, mvn spring-boot:run) greift der
+    # file:-Eintrag und liest die Dateien direkt - eine im Editor geaenderte .md
+    # wirkt damit nach POST /api/knowledge/reindex sofort, ohne Rebuild und ohne
+    # Neustart. Aus einem gepackten Jar liefert file: nichts und classpath:
+    # uebernimmt, ohne Konfigurationsaenderung.
+    location: ${KNOWLEDGE_LOCATION:file:src/main/resources/knowledge/*.md,classpath:knowledge/*.md}
+    # Einmaliger Ingest beim Start, damit die Demo sofort benutzbar ist.
+    index-on-startup: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    display-request-duration: true
+
+logging:
+  level:
+    com.example.aiagents: DEBUG

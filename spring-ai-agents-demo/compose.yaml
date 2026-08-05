@@ -1,0 +1,12 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: ai-agents-qdrant
+    ports:
+      - "6343:6333"   # REST + Dashboard
+      - "6344:6334"   # gRPC (nutzt Spring AI)
+    volumes:
+      - qdrant-data:/qdrant/storage
+
+volumes:
+  qdrant-data:
