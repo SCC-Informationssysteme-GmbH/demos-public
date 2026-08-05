@@ -6,6 +6,7 @@
 |---|---|---|
 | [spring-tts-demo](spring-tts-demo/) | Text-to-Speech Demo: Text per OpenAI TTS in gesprochene Sprache umwandeln, inkl. Mehr-Stimmen-Dialog | Spring Boot (WebFlux), React, OpenAI TTS API |
 | [spring-ai-demo](spring-ai-demo/) | Showcase mit sechs typischen LLM-Integrationsbereichen: REST-Chat, Prompt-Templates, RAG, Vektordatenbank (Qdrant), LangChain4j, KI-Business-Logik | Spring Boot, React, OpenAI API, Qdrant, LangChain4j |
+| [spring-ai-agents-demo](spring-ai-agents-demo/) | Multi-Agenten-System für Kundenanfragen: Klassifizierung, RAG-gestützte Recherche (Qdrant) und Antwortentwurf, freigegeben durch einen Mitarbeiter | Spring Boot, Spring AI, React, OpenAI API, Qdrant |
 | [spring-n8n-demo](spring-n8n-demo/) | Bestell-Freigabeprozess: Backend löst per Webhook einen n8n-Workflow aus, der ab einem Schwellwert eine Freigabe-Anfrage in Slack postet | Spring Boot, React, n8n, Slack |
 | [spring-t23d-demo](spring-t23d-demo/) | Text-to-3D (T23D): Bauteil per Text beschreiben, LLM generiert FreeCAD-Python-Code, der isoliert in Docker ein 3D-Modell (STL) erzeugt und im Browser angezeigt wird | Spring Boot, React (react-three-fiber), OpenAI API, FreeCAD, Docker |
 | [jee-bpel-demo](jee-bpel-demo/) | Bestellfreigabe als BPEL-Prozess auf Apache ODE: drei Freigabepfade (automatisch, Gelbfallbearbeitung, Manager-Freigabe mit Eskalation) inkl. Korrelationssets, Fristen, Kompensation und Storno-Pattern | Jakarta EE 10 (WildFly), JPA/Hibernate, EJB, CDI, JMS, REST + SOAP, JSF/PrimeFaces, Apache ODE, Oracle Free, Docker |
@@ -17,7 +18,7 @@ Jedes Projekt ist eigenständig und enthält eine eigene README mit Setup-Anleit
 Alle in diesem Repository genannten Produkt- und Firmennamen sind Marken oder eingetragene Marken der jeweiligen Eigentümer:
 
 - **OpenAI, GPT, ChatGPT** – OpenAI OpCo, LLC.
-- **Spring, Spring Boot** – Broadcom Inc. (VMware).
+- **Spring, Spring Boot, Spring AI** – Broadcom Inc. (VMware).
 - **React** – Meta Platforms, Inc.
 - **Qdrant** – Qdrant Solutions GmbH.
 - **LangChain, LangChain4j** – LangChain, Inc.
