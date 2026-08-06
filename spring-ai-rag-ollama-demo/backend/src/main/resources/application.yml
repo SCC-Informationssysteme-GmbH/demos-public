@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: spring-ai-rag-ollama-demo
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  ai:
+    # Explizite Auswahl (optional - bei nur einem Anbieter im Classpath
+    # ohnehin der Default, hier der Klarheit halber gesetzt)
+    model:
+      chat: ollama
+      embedding: ollama
+
+    ollama:
+      # base-url wird NICHT gesetzt: sie wird automatisch von der
+      # Docker-Compose-Integration injiziert, solange der ollama-Service
+      # aus compose.yaml läuft. Für einen manuell gestarteten Ollama-
+      # Prozess (ohne Docker Compose) hier http://localhost:11434 setzen.
+      chat:
+        model: llama3.2
+        options:
+          temperature: 0.3
+      embedding:
+        model: mxbai-embed-large
+
+    vectorstore:
+      qdrant:
+        # host/port ebenfalls automatisch via Docker-Compose-Integration
+        collection-name: rag-demo
+        initialize-schema: true
+
+server:
+  port: 8080
+
+logging:
+  level:
+    org.springframework.ai: INFO

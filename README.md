@@ -10,6 +10,7 @@
 | [spring-n8n-demo](spring-n8n-demo/) | Bestell-Freigabeprozess: Backend löst per Webhook einen n8n-Workflow aus, der ab einem Schwellwert eine Freigabe-Anfrage in Slack postet | Spring Boot, React, n8n, Slack |
 | [spring-t23d-demo](spring-t23d-demo/) | Text-to-3D (T23D): Bauteil per Text beschreiben, LLM generiert FreeCAD-Python-Code, der isoliert in Docker ein 3D-Modell (STL) erzeugt und im Browser angezeigt wird | Spring Boot, React (react-three-fiber), OpenAI API, FreeCAD, Docker |
 | [jee-bpel-demo](jee-bpel-demo/) | Bestellfreigabe als BPEL-Prozess auf Apache ODE: drei Freigabepfade (automatisch, Gelbfallbearbeitung, Manager-Freigabe mit Eskalation) inkl. Korrelationssets, Fristen, Kompensation und Storno-Pattern | Jakarta EE 10 (WildFly), JPA/Hibernate, EJB, CDI, JMS, REST + SOAP, JSF/PrimeFaces, Apache ODE, Oracle Free, Docker |
+| [spring-ai-rag-ollama-demo](spring-ai-rag-ollama-demo/) | Retrieval-Augmented Generation (RAG) komplett lokal: Chat- und Embedding-Modell laufen über Ollama, eine Qdrant-Vektorsuche liefert den passenden Kontext | Spring Boot, Spring AI, React, Ollama, Qdrant |
 
 Jedes Projekt ist eigenständig und enthält eine eigene README mit Setup-Anleitung.
 
@@ -21,6 +22,7 @@ Alle in diesem Repository genannten Produkt- und Firmennamen sind Marken oder ei
 - **Spring, Spring Boot, Spring AI** – Broadcom Inc. (VMware).
 - **React** – Meta Platforms, Inc.
 - **Qdrant** – Qdrant Solutions GmbH.
+- **Ollama** – Ollama Inc.
 - **LangChain, LangChain4j** – LangChain, Inc.
 - **n8n** – n8n GmbH.
 - **Slack** – Slack Technologies, LLC (Salesforce).

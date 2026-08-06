@@ -1,0 +1,35 @@
+# Wird von Spring Boot automatisch erkannt und beim Anwendungsstart
+# hochgefahren (spring-ai-spring-boot-docker-compose Modul).
+# Verbindungsdaten (Host/Port) werden dabei automatisch an die
+# Ollama- und Qdrant-Beans durchgereicht - keine manuelle Konfiguration
+# in application.yml notwendig, solange die Container-Images unten
+# unverändert bleiben (Erkennung erfolgt über den Image-Namen).
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    # Für NVIDIA-GPU-Beschleunigung (nvidia-container-toolkit erforderlich)
+    # die folgenden Zeilen einkommentieren:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [ gpu ]
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333" # REST-API / Dashboard (http://localhost:6333/dashboard)
+      - "6334:6334" # gRPC-API (wird von Spring AI genutzt)
+    volumes:
+      - qdrant-data:/qdrant/storage
+
+volumes:
+  ollama-data:
+  qdrant-data:
