@@ -1,0 +1,25 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: mcp-orchestrator-backend
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        options:
+          model: gpt-4o-mini
+    mcp:
+      client:
+        type: sync
+        toolcallback:
+          enabled: true
+        streamable-http:
+          connections:
+            buchhandlung:
+              url: http://localhost:8082
+              endpoint: /mcp
+            kundenverwaltung:
+              url: http://localhost:8084
+              endpoint: /mcp

@@ -11,6 +11,7 @@
 | [spring-t23d-demo](spring-t23d-demo/) | Text-to-3D (T23D): Bauteil per Text beschreiben, LLM generiert FreeCAD-Python-Code, der isoliert in Docker ein 3D-Modell (STL) erzeugt und im Browser angezeigt wird | Spring Boot, React (react-three-fiber), OpenAI API, FreeCAD, Docker |
 | [jee-bpel-demo](jee-bpel-demo/) | Bestellfreigabe als BPEL-Prozess auf Apache ODE: drei Freigabepfade (automatisch, Gelbfallbearbeitung, Manager-Freigabe mit Eskalation) inkl. Korrelationssets, Fristen, Kompensation und Storno-Pattern | Jakarta EE 10 (WildFly), JPA/Hibernate, EJB, CDI, JMS, REST + SOAP, JSF/PrimeFaces, Apache ODE, Oracle Free, Docker |
 | [spring-ai-rag-ollama-demo](spring-ai-rag-ollama-demo/) | Retrieval-Augmented Generation (RAG) komplett lokal: Chat- und Embedding-Modell laufen über Ollama, eine Qdrant-Vektorsuche liefert den passenden Kontext | Spring Boot, Spring AI, React, Ollama, Qdrant |
+| [spring-mcp-demo](spring-mcp-demo/) | MCP (Model Context Protocol): zwei Fachdomänen (Buchhandlung, Kundenverwaltung) mit eigenem MCP-Server, orchestriert von einem Backend, das per ChatClient und MCP-Client mit OpenAI und beiden Servern spricht | Spring Boot, Spring AI, MCP, React, OpenAI API |
 
 Jedes Projekt ist eigenständig und enthält eine eigene README mit Setup-Anleitung.
 
@@ -19,6 +20,7 @@ Jedes Projekt ist eigenständig und enthält eine eigene README mit Setup-Anleit
 Alle in diesem Repository genannten Produkt- und Firmennamen sind Marken oder eingetragene Marken der jeweiligen Eigentümer:
 
 - **OpenAI, GPT, ChatGPT** – OpenAI OpCo, LLC.
+- **Model Context Protocol (MCP)** – Anthropic, PBC.
 - **Spring, Spring Boot, Spring AI** – Broadcom Inc. (VMware).
 - **React** – Meta Platforms, Inc.
 - **Qdrant** – Qdrant Solutions GmbH.

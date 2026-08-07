@@ -1,0 +1,22 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: mcp-buchhandlung-domain-api
+  datasource:
+    url: jdbc:h2:mem:buchhandlung;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    defer-datasource-initialization: true
+    show-sql: false
+  sql:
+    init:
+      mode: always
+  h2:
+    console:
+      enabled: true

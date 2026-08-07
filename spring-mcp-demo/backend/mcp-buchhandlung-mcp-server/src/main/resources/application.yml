@@ -1,0 +1,16 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: mcp-buchhandlung-mcp-server
+  ai:
+    mcp:
+      server:
+        name: buchhandlung-mcp-server
+        version: 0.1.0
+        protocol: STREAMABLE
+
+buchhandlung:
+  domain-api:
+    base-url: http://localhost:8081
